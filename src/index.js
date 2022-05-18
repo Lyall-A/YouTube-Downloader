@@ -7,8 +7,20 @@ const prompts = require('prompts');
 const { resolve } = require('path');
 const fs = require('fs');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
+let searchLimit = 20;
+let debug = false;
 
 (async () => {
+    if (!fs.existsSync(resolve(__dirname, '..') + "\\Delete this if you know what your doing")) debug = true;
+    if (debug === true) {
+        let old = { mkdirSync: fs.mkdirSync }
+        console.log(chalk.red("DEBUG MODE IS ENABLED"))
+        fs.mkdirSync = function (dir) {
+            console.log(`Creating directory ${dir}`)
+            old.mkdirSync(dir);
+        }
+    }
+
     if (!fs.existsSync(downloads)) fs.mkdirSync(downloads);
     if (!fs.existsSync(`${downloads}\\Videos`)) fs.mkdirSync(`${downloads}\\Videos`);
     if (!fs.existsSync(`${downloads}\\Audios`)) fs.mkdirSync(`${downloads}\\Audios`);
@@ -24,7 +36,7 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
 
     async function launch(option) {
         if (option === "search") {
-            const searched = await search(askYouTube.youtube, { limit: 10 });
+            const searched = await search(askYouTube.youtube, { limit: searchLimit });
             if (!searched[0]) {
                 return console.log(chalk.red("No results where found"))
             }
@@ -42,7 +54,7 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                 rawSearchArray.push(name)
                 searchArray.push(chalk.blue(query + ". ") + chalk.green(name));
                 idArray.push(each.id)
-                if (query === 10) {
+                if (query === searchLimit) {
                     foundAll = true;
                     searchContinue()
                 }
@@ -94,14 +106,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                             .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
-                                return console.log("An FFmpeg Error Occurred, Sorry!")
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
                                     .addInput(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
                                     .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
-                                        return console.log("An FFmpeg Error Occurred, Sorry!")
+                                        console.log("An FFmpeg Error Occurred, Sorry!")
+                                        if (debug) console.log(err)
+                                        return;
                                     })
                                     .on('end', () => {
                                         unlink()
@@ -117,14 +133,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                             .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
-                                return console.log("An FFmpeg Error Occurred, Sorry!")
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
                                     .addInput(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
                                     .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
-                                        return console.log("An FFmpeg Error Occurred, Sorry!")
+                                        console.log("An FFmpeg Error Occurred, Sorry!")
+                                        if (debug) console.log(err)
+                                        return;
                                     })
                                     .on('end', () => {
                                         unlink()
@@ -151,7 +171,9 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                             .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
-                                return console.log("An FFmpeg Error Occurred, Sorry!")
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
                             })
                             .on('end', () => {
                                 return console.log("Succesfully completed audio download!")
@@ -160,7 +182,9 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                             .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
-                                return console.log("An FFmpeg Error Occurred, Sorry!")
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
                             })
                             .on('end', () => {
                                 return console.log("Succesfully completed audio download!")
@@ -189,14 +213,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                             ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                                 .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
-                                    return console.log("An FFmpeg Error Occurred, Sorry!")
+                                    console.log("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) console.log(err)
+                                    return;
                                 })
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
                                         .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                         .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
-                                            return console.log("An FFmpeg Error Occurred, Sorry!")
+                                            console.log("An FFmpeg Error Occurred, Sorry!")
+                                            if (debug) console.log(err)
+                                            return;
                                         })
                                         .on('end', () => {
                                             return console.log("Succesfully completed video amd audio download!")
@@ -206,14 +234,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                             ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                                 .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
-                                    return console.log("An FFmpeg Error Occurred, Sorry!")
+                                    console.log("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) console.log(err)
+                                    return;
                                 })
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
                                         .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                         .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
-                                            return console.log("An FFmpeg Error Occurred, Sorry!")
+                                            console.log("An FFmpeg Error Occurred, Sorry!")
+                                            if (debug) console.log(err)
+                                            return;
                                         })
                                         .on('end', () => {
                                             return console.log("Succesfully completed video amd audio download!")
@@ -234,14 +266,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                             ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                                 .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
-                                    return console.log("An FFmpeg Error Occurred, Sorry!")
+                                    console.log("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) console.log(err)
+                                    return;
                                 })
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
                                         .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                         .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
-                                            return console.log("An FFmpeg Error Occurred, Sorry!")
+                                            console.log("An FFmpeg Error Occurred, Sorry!")
+                                            if (debug) console.log(err)
+                                            return;
                                         })
                                         .on('end', () => {
                                             return console.log("Succesfully completed video amd audio download!")
@@ -251,14 +287,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                             ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                                 .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
-                                    return console.log("An FFmpeg Error Occurred, Sorry!")
+                                    console.log("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) console.log(err)
+                                    return;
                                 })
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
                                         .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                         .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
-                                            return console.log("An FFmpeg Error Occurred, Sorry!")
+                                            console.log("An FFmpeg Error Occurred, Sorry!")
+                                            if (debug) console.log(err)
+                                            return;
                                         })
                                         .on('end', () => {
                                             return console.log("Succesfully completed video amd audio download!")
@@ -316,14 +356,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                     ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                         .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
                         .on('error', (err) => {
-                            return console.log("An FFmpeg Error Occurred, Sorry!")
+                            console.log("An FFmpeg Error Occurred, Sorry!")
+                            if (debug) console.log(err)
+                            return;
                         })
                         .on('end', () => {
                             ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                 .addInput(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
                                 .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                 .on('error', (err) => {
-                                    return console.log("An FFmpeg Error Occurred, Sorry!")
+                                    console.log("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) console.log(err)
+                                    return;
                                 })
                                 .on('end', () => {
                                     unlink()
@@ -339,14 +383,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                     ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                         .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
                         .on('error', (err) => {
-                            return console.log("An FFmpeg Error Occurred, Sorry!")
+                            console.log("An FFmpeg Error Occurred, Sorry!")
+                            if (debug) console.log(err)
+                            return;
                         })
                         .on('end', () => {
                             ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                 .addInput(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
                                 .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                 .on('error', (err) => {
-                                    return console.log("An FFmpeg Error Occurred, Sorry!")
+                                    console.log("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) console.log(err)
+                                    return;
                                 })
                                 .on('end', () => {
                                     unlink()
@@ -411,14 +459,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                             .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
-                                return console.log("An FFmpeg Error Occurred, Sorry!")
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                     .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                     .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
-                                        return console.log("An FFmpeg Error Occurred, Sorry!")
+                                        console.log("An FFmpeg Error Occurred, Sorry!")
+                                        if (debug) console.log(err)
+                                        return;
                                     })
                                     .on('end', () => {
                                         return console.log("Succesfully completed video amd audio download!")
@@ -428,14 +480,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                             .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
-                                return console.log("An FFmpeg Error Occurred, Sorry!")
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                     .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                     .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
-                                        return console.log("An FFmpeg Error Occurred, Sorry!")
+                                        console.log("An FFmpeg Error Occurred, Sorry!")
+                                        if (debug) console.log(err)
+                                        return;
                                     })
                                     .on('end', () => {
                                         return console.log("Succesfully completed video amd audio download!")
@@ -456,14 +512,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                             .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
-                                return console.log("An FFmpeg Error Occurred, Sorry!")
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                     .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                     .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
-                                        return console.log("An FFmpeg Error Occurred, Sorry!")
+                                        console.log("An FFmpeg Error Occurred, Sorry!")
+                                        if (debug) console.log(err)
+                                        return;
                                     })
                                     .on('end', () => {
                                         return console.log("Succesfully completed video amd audio download!")
@@ -473,14 +533,18 @@ const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                             .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
-                                return console.log("An FFmpeg Error Occurred, Sorry!")
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                     .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
                                     .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
-                                        return console.log("An FFmpeg Error Occurred, Sorry!")
+                                        console.log("An FFmpeg Error Occurred, Sorry!")
+                                        if (debug) console.log(err)
+                                        return;
                                     })
                                     .on('end', () => {
                                         return console.log("Succesfully completed video amd audio download!")
