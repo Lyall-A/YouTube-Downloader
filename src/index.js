@@ -94,7 +94,7 @@ let debug = false;
                 supportedFileName = supportedFileName.replaceAll("|", "");
 
                 if (askFormat.format === "mp4") {
-                    if (fs.existsSync(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)) {
+                    if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
                         const askOverwrite = await prompts({
                             type: 'text',
                             name: 'overwrite',
@@ -104,7 +104,7 @@ let debug = false;
 
                         if (askOverwrite.overwrite === "n") return;
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                            .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
+                            .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
@@ -112,8 +112,8 @@ let debug = false;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
-                                    .addInput(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
-                                    .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                    .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
                                         if (debug) console.log(err)
@@ -122,7 +122,7 @@ let debug = false;
                                     .on('end', () => {
                                         unlink()
                                         function unlink() {
-                                            fs.unlink(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                            fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
                                                 if (err) unlink()
                                             });
                                         }
@@ -131,7 +131,7 @@ let debug = false;
                             });
                     } else {
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                            .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
+                            .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
@@ -139,8 +139,8 @@ let debug = false;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
-                                    .addInput(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
-                                    .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                    .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
                                         if (debug) console.log(err)
@@ -149,7 +149,7 @@ let debug = false;
                                     .on('end', () => {
                                         unlink()
                                         function unlink() {
-                                            fs.unlink(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                            fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
                                                 if (err) unlink()
                                             });
                                         }
@@ -159,7 +159,7 @@ let debug = false;
                     }
                 }
                 if (askFormat.format === "mp3") {
-                    if (fs.existsSync(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)) {
+                    if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
                         const askOverwrite = await prompts({
                             type: 'text',
                             name: 'overwrite',
@@ -169,7 +169,7 @@ let debug = false;
 
                         if (askOverwrite.overwrite === "n") return;
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                            .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                            .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
@@ -180,7 +180,7 @@ let debug = false;
                             });
                     } else {
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                            .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                            .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
@@ -192,7 +192,7 @@ let debug = false;
                     }
                 }
                 if (askFormat.format === "both") {
-                    if (fs.existsSync(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)) {
+                    if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
                         const askOverwrite = await prompts({
                             type: 'text',
                             name: 'overwrite',
@@ -201,7 +201,7 @@ let debug = false;
                         });
 
                         if (askOverwrite.overwrite === "n") return;
-                        if (fs.existsSync(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)) {
+                        if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
                             const askOverwrite = await prompts({
                                 type: 'text',
                                 name: 'overwrite',
@@ -211,7 +211,7 @@ let debug = false;
 
                             if (askOverwrite.overwrite === "n") return;
                             ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                                .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                                .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
                                     if (debug) console.log(err)
@@ -219,8 +219,8 @@ let debug = false;
                                 })
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
-                                        .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
-                                        .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                        .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                        .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
                                             console.log("An FFmpeg Error Occurred, Sorry!")
                                             if (debug) console.log(err)
@@ -232,7 +232,7 @@ let debug = false;
                                 });
                         } else {
                             ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                                .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                                .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
                                     if (debug) console.log(err)
@@ -240,8 +240,8 @@ let debug = false;
                                 })
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
-                                        .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
-                                        .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                        .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                        .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
                                             console.log("An FFmpeg Error Occurred, Sorry!")
                                             if (debug) console.log(err)
@@ -254,7 +254,7 @@ let debug = false;
                         }
 
                     } else {
-                        if (fs.existsSync(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)) {
+                        if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
                             const askOverwrite = await prompts({
                                 type: 'text',
                                 name: 'overwrite',
@@ -264,7 +264,7 @@ let debug = false;
 
                             if (askOverwrite.overwrite === "n") return;
                             ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                                .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                                .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
                                     if (debug) console.log(err)
@@ -272,8 +272,8 @@ let debug = false;
                                 })
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
-                                        .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
-                                        .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                        .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                        .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
                                             console.log("An FFmpeg Error Occurred, Sorry!")
                                             if (debug) console.log(err)
@@ -285,7 +285,7 @@ let debug = false;
                                 });
                         } else {
                             ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                                .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                                .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
                                     if (debug) console.log(err)
@@ -293,8 +293,8 @@ let debug = false;
                                 })
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
-                                        .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
-                                        .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                        .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                        .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
                                             console.log("An FFmpeg Error Occurred, Sorry!")
                                             if (debug) console.log(err)
@@ -344,7 +344,7 @@ let debug = false;
             supportedFileName = supportedFileName.replaceAll("|", "");
 
             if (askFormat.format === "mp4") {
-                if (fs.existsSync(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)) {
+                if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
                     const askOverwrite = await prompts({
                         type: 'text',
                         name: 'overwrite',
@@ -354,7 +354,7 @@ let debug = false;
 
                     if (askOverwrite.overwrite === "n") return;
                     ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                        .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
+                        .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                         .on('error', (err) => {
                             console.log("An FFmpeg Error Occurred, Sorry!")
                             if (debug) console.log(err)
@@ -362,8 +362,8 @@ let debug = false;
                         })
                         .on('end', () => {
                             ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                .addInput(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
-                                .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
                                     if (debug) console.log(err)
@@ -372,7 +372,7 @@ let debug = false;
                                 .on('end', () => {
                                     unlink()
                                     function unlink() {
-                                        fs.unlink(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                        fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
                                             if (err) unlink()
                                         });
                                     }
@@ -381,7 +381,7 @@ let debug = false;
                         });
                 } else {
                     ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                        .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
+                        .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                         .on('error', (err) => {
                             console.log("An FFmpeg Error Occurred, Sorry!")
                             if (debug) console.log(err)
@@ -389,8 +389,8 @@ let debug = false;
                         })
                         .on('end', () => {
                             ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                .addInput(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`)
-                                .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
                                     if (debug) console.log(err)
@@ -399,7 +399,7 @@ let debug = false;
                                 .on('end', () => {
                                     unlink()
                                     function unlink() {
-                                        fs.unlink(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                        fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
                                             if (err) unlink()
                                         });
                                     }
@@ -409,7 +409,7 @@ let debug = false;
                 }
             }
             if (askFormat.format === "mp3") {
-                if (fs.existsSync(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)) {
+                if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
                     const askOverwrite = await prompts({
                         type: 'text',
                         name: 'overwrite',
@@ -419,7 +419,7 @@ let debug = false;
 
                     if (askOverwrite.overwrite === "n") return;
                     ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                        .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                        .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                         .on('error', (err) => {
                             console.log("An FFmpeg Error Occurred, Sorry!")
                         })
@@ -428,7 +428,7 @@ let debug = false;
                         });
                 } else {
                     ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                        .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                        .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                         .on('error', (err) => {
                             console.log("An FFmpeg Error Occurred, Sorry!")
                         })
@@ -438,7 +438,7 @@ let debug = false;
                 }
             }
             if (askFormat.format === "both") {
-                if (fs.existsSync(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)) {
+                if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
                     const askOverwrite = await prompts({
                         type: 'text',
                         name: 'overwrite',
@@ -447,7 +447,7 @@ let debug = false;
                     });
 
                     if (askOverwrite.overwrite === "n") return;
-                    if (fs.existsSync(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)) {
+                    if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
                         const askOverwrite = await prompts({
                             type: 'text',
                             name: 'overwrite',
@@ -457,7 +457,7 @@ let debug = false;
 
                         if (askOverwrite.overwrite === "n") return;
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                            .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                            .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
@@ -465,8 +465,8 @@ let debug = false;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                    .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
-                                    .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                    .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
                                         if (debug) console.log(err)
@@ -478,7 +478,7 @@ let debug = false;
                             });
                     } else {
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                            .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                            .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
@@ -486,8 +486,8 @@ let debug = false;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                    .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
-                                    .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                    .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
                                         if (debug) console.log(err)
@@ -500,7 +500,7 @@ let debug = false;
                     }
 
                 } else {
-                    if (fs.existsSync(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)) {
+                    if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
                         const askOverwrite = await prompts({
                             type: 'text',
                             name: 'overwrite',
@@ -510,7 +510,7 @@ let debug = false;
 
                         if (askOverwrite.overwrite === "n") return;
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                            .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                            .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
@@ -518,8 +518,8 @@ let debug = false;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                    .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
-                                    .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                    .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
                                         if (debug) console.log(err)
@@ -531,7 +531,7 @@ let debug = false;
                             });
                     } else {
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                            .save(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
+                            .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
@@ -539,8 +539,8 @@ let debug = false;
                             })
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                    .addInput(`${resolve(__dirname, '..')}\\Audios\\${supportedFileName}.mp3`)
-                                    .save(`${resolve(__dirname, '..')}\\Videos\\${supportedFileName}.mp4`)
+                                    .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
                                         if (debug) console.log(err)
