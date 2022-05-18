@@ -1,0 +1,23 @@
+{
+  "name": "youtube-downloader",
+  "version": "1.0.0",
+  "description": "A YouTube Downloader using FFmpeg and ytdl-core!",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "youtube",
+    "ffmpeg",
+    "downloader"
+  ],
+  "author": "Lyall A",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "prompts": "^2.4.2",
+    "youtube-sr": "^4.1.17",
+    "ytdl-core": "^4.11.0"
+  }
+}
