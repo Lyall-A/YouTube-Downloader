@@ -1,3 +1,4 @@
+// setting up variables
 const ytdl = require('ytdl-core');
 const { search } = require('youtube-sr').default;
 const { getVideo } = require('youtube-sr').default;
@@ -7,11 +8,14 @@ const prompts = require('prompts');
 const { resolve } = require('path');
 const fs = require('fs');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
-let searchLimit = 20;
-let debug = false;
+let searchLimit = 20; // change this if you want to search for more or less results
+let debug = false; // change this to true if you wnat debug mode, deleting that file also enables this
 
 (async () => {
+    // check if the file exists, if not then debug mode will be enabled
     if (!fs.existsSync(resolve(__dirname, '..') + "\\Delete this if you know what your doing")) debug = true;
+
+    // if debug mode is on it runs this
     if (debug === true) {
         let old = { mkdirSync: fs.mkdirSync }
         console.log(chalk.red("DEBUG MODE IS ENABLED"))
@@ -21,10 +25,12 @@ let debug = false;
         }
     }
 
+    // checks if download folders exist, if not then it automatically creates them
     if (!fs.existsSync(downloads)) fs.mkdirSync(downloads);
     if (!fs.existsSync(`${downloads}\\Videos`)) fs.mkdirSync(`${downloads}\\Videos`);
     if (!fs.existsSync(`${downloads}\\Audios`)) fs.mkdirSync(`${downloads}\\Audios`);
 
+    // asking for the link or query
     const askYouTube = await prompts({
         type: 'text',
         name: 'youtube',
@@ -32,10 +38,14 @@ let debug = false;
         validate: response => response === "" ? "You must enter a YouTube link or a Search Query" : true
     });
 
+    // detect if answer is link or query
     if (askYouTube.youtube.startsWith('http')) { launch("link") } else { launch("search") }
 
+    // launch the downloader
     async function launch(option) {
+        // if it detected a search and not a link
         if (option === "search") {
+            // get video details using youtube api
             const searched = await search(askYouTube.youtube, { limit: searchLimit });
             if (!searched[0]) {
                 return console.log(chalk.red("No results where found"))
@@ -45,6 +55,7 @@ let debug = false;
             let searchArray = [];
             let idArray = [];
             let rawSearchArray = [];
+            // adding search results
             searched.forEach(each => {
                 query += 1;
                 let name;
@@ -60,10 +71,12 @@ let debug = false;
                 }
             });
             setTimeout(() => {
+                // this is if it couldnt find the amount of results searched (or took to long)
                 if (!foundAll) searchContinue()
             }, 5000)
             async function searchContinue() {
                 console.log("\n" + searchArray.join('\n') + "\n")
+                // ask what video you want to choose, 1 out of the specified limit
                 const askVid = await prompts({
                     type: 'number',
                     name: 'vid',
@@ -71,6 +84,7 @@ let debug = false;
                     validate: response => !response ? "You must enter the YouTube Video number shown above" : response > query ? "Unknown Video" : response < 1 ? "Cannot be under 1" : true
                 });
 
+                // ask the format, mp4, mp3 or both
                 const askFormat = await prompts({
                     type: 'select',
                     name: 'format',
@@ -82,6 +96,7 @@ let debug = false;
                     ],
                 });
 
+                // a lot of code just to make sure that the file wont fail due to a character in the title that windows doesnt like
                 let supportedFileName = rawSearchArray[askVid.vid - 1];
                 supportedFileName = supportedFileName.replaceAll("\\", "");
                 supportedFileName = supportedFileName.replaceAll("/", "");
@@ -93,8 +108,11 @@ let debug = false;
                 supportedFileName = supportedFileName.replaceAll(">", "");
                 supportedFileName = supportedFileName.replaceAll("|", "");
 
+                // if you chose mp4/video
                 if (askFormat.format === "mp4") {
+                    // checks if video has already been downloaded
                     if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
+                        // asks if you want to overwrite
                         const askOverwrite = await prompts({
                             type: 'text',
                             name: 'overwrite',
@@ -102,24 +120,34 @@ let debug = false;
                             validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
                         });
 
+                        // if no then return
                         if (askOverwrite.overwrite === "n") return;
+                        // else continue and download mp4
+
+                        // downloading audio
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                             .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
+                                // if a error was found downloading audio
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
                                 return;
                             })
                             .on('end', () => {
+                                // if the audio download finished
+
+                                // downloading video
                                 ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
                                     .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
+                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
                                     .on('error', (err) => {
+                                        // if a error was found downloading video
                                         console.log("An FFmpeg Error Occurred, Sorry!")
                                         if (debug) console.log(err)
                                         return;
                                     })
                                     .on('end', () => {
+                                        // if the video download finished
                                         unlink()
                                         function unlink() {
                                             fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
@@ -130,36 +158,46 @@ let debug = false;
                                     });
                             });
                     } else {
+                        // if the video hasnt already been downloaded
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                            .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                            .on('error', (err) => {
-                                console.log("An FFmpeg Error Occurred, Sorry!")
-                                if (debug) console.log(err)
-                                return;
-                            })
-                            .on('end', () => {
-                                ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
-                                    .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
-                                    .on('error', (err) => {
-                                        console.log("An FFmpeg Error Occurred, Sorry!")
-                                        if (debug) console.log(err)
-                                        return;
-                                    })
-                                    .on('end', () => {
-                                        unlink()
-                                        function unlink() {
-                                            fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
-                                                if (err) unlink()
-                                            });
-                                        }
-                                        return console.log("Succesfully completed video download!")
-                                    });
-                            });
+                        .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                        .on('error', (err) => {
+                            // if a error was found downloading audio
+                            console.log("An FFmpeg Error Occurred, Sorry!")
+                            if (debug) console.log(err)
+                            return;
+                        })
+                        .on('end', () => {
+                            // if the audio download finished
+
+                            // downloading video
+                            ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
+                                .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                .save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
+                                .on('error', (err) => {
+                                    // if a error was found downloading video
+                                    console.log("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) console.log(err)
+                                    return;
+                                })
+                                .on('end', () => {
+                                    // if the video download finished
+                                    unlink()
+                                    function unlink() {
+                                        fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                            if (err) unlink()
+                                        });
+                                    }
+                                    return console.log("Succesfully completed video download!")
+                                });
+                        });
                     }
                 }
+                // if you chose mp3/audio
                 if (askFormat.format === "mp3") {
+                    // checks if audio has been downloaded before
                     if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
+                        // asks if you want to overwrite previous audio file
                         const askOverwrite = await prompts({
                             type: 'text',
                             name: 'overwrite',
@@ -167,31 +205,41 @@ let debug = false;
                             validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
                         });
 
+                        // if no then return
                         if (askOverwrite.overwrite === "n") return;
+                        // else download
+
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                             .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
+                                // if an error was found
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
                                 return;
                             })
                             .on('end', () => {
+                                // if audio finished downloading
                                 return console.log("Succesfully completed audio download!")
                             });
                     } else {
+                        // if audio hasnt already been downloaded
                         ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
                             .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
+                                // if an error was found
                                 console.log("An FFmpeg Error Occurred, Sorry!")
                                 if (debug) console.log(err)
                                 return;
                             })
                             .on('end', () => {
+                                // if audio finished downloading
                                 return console.log("Succesfully completed audio download!")
                             });
                     }
                 }
+                // if you chose both
                 if (askFormat.format === "both") {
+                    // this is A LOTT of code
                     if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
                         const askOverwrite = await prompts({
                             type: 'text',
@@ -330,7 +378,13 @@ let debug = false;
                 ],
             });
 
-            const searched = await getVideo(link);
+            
+            const searched = await getVideo(link).catch(err => {
+                // if it failed to get video, log
+                return console.log("Failed to find video")
+            });
+
+            if (!searched) return; // this just stops the code below from running if no video was found
 
             let supportedFileName = searched.title;
             supportedFileName = supportedFileName.replaceAll("\\", "");
