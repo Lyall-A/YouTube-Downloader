@@ -1,5 +1,5 @@
-{
-    "badquality": {
+[
+    {
         "name": "Bad Quality",
         "config": {
             "videos": null,
@@ -12,4 +12,4 @@
             "volume": "2"
         }
     }
-}
+]
