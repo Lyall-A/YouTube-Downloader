@@ -9,7 +9,7 @@
             "framerate": 5,
             "format": "mp4",
             "overwrite": false,
-            "volume": "2"
+            "volume": "1"
         }
     }
 ]
