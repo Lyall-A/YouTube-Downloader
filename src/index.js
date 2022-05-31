@@ -8,8 +8,25 @@ const prompts = require('prompts');
 const { resolve } = require('path');
 const fs = require('fs');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
-let searchLimit = 20; // change this if you want to search for more or less results
+let searchLimit = 10; // change this if you want to search for more or less results
 let debug = false; // change this to true if you wnat debug mode, deleting that file also enables this
+let optionBypassEnabled = false; // if you want options to be done automiatcally
+/* optionBypass example
+query can be a link or a search
+format can be mp4, mp3 or both
+previouslyDownloaded is y or n 
+
+all is optional
+
+let optionBypass = {
+    query: "https://www.youtube.com/watch?v=HRW9W7ZtOEI",
+    format: "mp4",
+    previouslyDownloaded: "y"
+};
+
+*/
+let optionBypass = {
+};
 
 (async () => {
     // check if the file exists, if not then debug mode will be enabled
@@ -24,6 +41,10 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
             old.mkdirSync(dir);
         }
     }
+    if (optionBypassEnabled) {
+        console.log(chalk.red("OPTION BYPASS IS ENABLED"))
+        searchLimit = 1;
+    }
 
     // checks if download folders exist, if not then it automatically creates them
     if (!fs.existsSync(downloads)) fs.mkdirSync(downloads);
@@ -31,12 +52,26 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
     if (!fs.existsSync(`${downloads}\\Audios`)) fs.mkdirSync(`${downloads}\\Audios`);
 
     // asking for the link or query
-    const askYouTube = await prompts({
-        type: 'text',
-        name: 'youtube',
-        message: 'Enter YouTube link or Search Query',
-        validate: response => response === "" ? "You must enter a YouTube link or a Search Query" : true
-    });
+    let askYouTube;
+    if (optionBypassEnabled) {
+        if (optionBypass.query) askYouTube = { youtube: optionBypass.query }
+        if (!optionBypass.query) {
+            askYouTube = await prompts({
+                type: 'text',
+                name: 'youtube',
+                message: 'Enter YouTube link or Search Query',
+                validate: response => response === "" ? "You must enter a YouTube link or a Search Query" : true
+            });
+        }
+    } else {
+        askYouTube = await prompts({
+            type: 'text',
+            name: 'youtube',
+            message: 'Enter YouTube link or Search Query',
+            validate: response => response === "" ? "You must enter a YouTube link or a Search Query" : true
+        });
+    }
+
 
     // detect if answer is link or query
     if (askYouTube.youtube.startsWith('http')) { launch("link") } else { launch("search") }
@@ -50,6 +85,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
             if (!searched[0]) {
                 return console.log(chalk.red("No results where found"))
             }
+
             let query = 0;
             let foundAll = false;
             let searchArray = [];
@@ -73,31 +109,54 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
             setTimeout(() => {
                 // this is if it couldnt find the amount of results searched (or took to long)
                 if (!foundAll) searchContinue()
-            }, 5000)
+            }, 4000)
             async function searchContinue() {
-                console.log("\n" + searchArray.join('\n') + "\n")
-                // ask what video you want to choose, 1 out of the specified limit
-                const askVid = await prompts({
-                    type: 'number',
-                    name: 'vid',
-                    message: 'What one do you want?',
-                    validate: response => !response ? "You must enter the YouTube Video number shown above" : response > query ? "Unknown Video" : response < 1 ? "Cannot be under 1" : true
-                });
+                let vidNum;
+                if (searchLimit !== 1) {
+                    console.log("\n" + searchArray.join('\n') + "\n")
+                    // ask what video you want to choose, 1 out of the specified limit
+
+                    const askVid = await prompts({
+                        type: 'number',
+                        name: 'vid',
+                        message: 'What one do you want?',
+                        validate: response => !response ? "You must enter the YouTube Video number shown above" : response > query ? "Unknown Video" : response < 1 ? "Cannot be under 1" : true
+                    });
+
+                    vidNum = askVid.vid;
+                } else vidNum = 1;
 
                 // ask the format, mp4, mp3 or both
-                const askFormat = await prompts({
-                    type: 'select',
-                    name: 'format',
-                    message: 'What Format do you want to download?',
-                    choices: [
-                        { title: 'Audio', value: 'mp3' },
-                        { title: 'Video', value: 'mp4' },
-                        { title: 'Both', value: 'both' }
-                    ],
-                });
+                let askFormat;
+                if (optionBypassEnabled) {
+                    if (optionBypass.format) askFormat = { format: optionBypass.format }
+                    if (!optionBypass.format) {
+                        askFormat = await prompts({
+                            type: 'select',
+                            name: 'format',
+                            message: 'What Format do you want to download?',
+                            choices: [
+                                { title: 'Audio', value: 'mp3' },
+                                { title: 'Video', value: 'mp4' },
+                                { title: 'Both', value: 'both' }
+                            ],
+                        });
+                    }
+                } else {
+                    askFormat = await prompts({
+                        type: 'select',
+                        name: 'format',
+                        message: 'What Format do you want to download?',
+                        choices: [
+                            { title: 'Audio', value: 'mp3' },
+                            { title: 'Video', value: 'mp4' },
+                            { title: 'Both', value: 'both' }
+                        ],
+                    });
+                }
 
                 // a lot of code just to make sure that the file wont fail due to a character in the title that windows doesnt like
-                let supportedFileName = rawSearchArray[askVid.vid - 1];
+                let supportedFileName = rawSearchArray[vidNum - 1];
                 supportedFileName = supportedFileName.replaceAll("\\", "");
                 supportedFileName = supportedFileName.replaceAll("/", "");
                 supportedFileName = supportedFileName.replaceAll(":", "");
@@ -113,19 +172,32 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                     // checks if video has already been downloaded
                     if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
                         // asks if you want to overwrite
-                        const askOverwrite = await prompts({
-                            type: 'text',
-                            name: 'overwrite',
-                            message: 'This has previously been downloaded, overwrite? \'Y/N\'',
-                            validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                        });
+                        let askOverwrite;
+                        if (optionBypassEnabled) {
+                            if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                            if (!optionBypass.previouslyDownloaded) {
+                                let askOverwrite = await prompts({
+                                    type: 'text',
+                                    name: 'overwrite',
+                                    message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                    validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                });
+                            }
+                        } else {
+                            let askOverwrite = await prompts({
+                                type: 'text',
+                                name: 'overwrite',
+                                message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                            });
+                        }
 
                         // if no then return
                         if (askOverwrite.overwrite === "n") return;
                         // else continue and download mp4
 
                         // downloading audio
-                        ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
+                        ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }))
                             .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 // if a error was found downloading audio
@@ -137,7 +209,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                 // if the audio download finished
 
                                 // downloading video
-                                ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
+                                ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                     .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                                     .save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
                                     .on('error', (err) => {
@@ -159,38 +231,38 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                             });
                     } else {
                         // if the video hasnt already been downloaded
-                        ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
-                        .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                        .on('error', (err) => {
-                            // if a error was found downloading audio
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                            if (debug) console.log(err)
-                            return;
-                        })
-                        .on('end', () => {
-                            // if the audio download finished
+                        ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }))
+                            .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                            .on('error', (err) => {
+                                // if a error was found downloading audio
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
+                            })
+                            .on('end', () => {
+                                // if the audio download finished
 
-                            // downloading video
-                            ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
-                                .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                                .save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
-                                .on('error', (err) => {
-                                    // if a error was found downloading video
-                                    console.log("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) console.log(err)
-                                    return;
-                                })
-                                .on('end', () => {
-                                    // if the video download finished
-                                    unlink()
-                                    function unlink() {
-                                        fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
-                                            if (err) unlink()
-                                        });
-                                    }
-                                    return console.log("Succesfully completed video download!")
-                                });
-                        });
+                                // downloading video
+                                ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
+                                    .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                    .save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
+                                    .on('error', (err) => {
+                                        // if a error was found downloading video
+                                        console.log("An FFmpeg Error Occurred, Sorry!")
+                                        if (debug) console.log(err)
+                                        return;
+                                    })
+                                    .on('end', () => {
+                                        // if the video download finished
+                                        unlink()
+                                        function unlink() {
+                                            fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                                if (err) unlink()
+                                            });
+                                        }
+                                        return console.log("Succesfully completed video download!")
+                                    });
+                            });
                     }
                 }
                 // if you chose mp3/audio
@@ -198,18 +270,31 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                     // checks if audio has been downloaded before
                     if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
                         // asks if you want to overwrite previous audio file
-                        const askOverwrite = await prompts({
-                            type: 'text',
-                            name: 'overwrite',
-                            message: 'This has previously been downloaded, overwrite? \'Y/N\'',
-                            validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                        });
+                        let askOverwrite;
+                        if (optionBypassEnabled) {
+                            if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                            if (!optionBypass.previouslyDownloaded) {
+                                let askOverwrite = await prompts({
+                                    type: 'text',
+                                    name: 'overwrite',
+                                    message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                    validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                });
+                            }
+                        } else {
+                            let askOverwrite = await prompts({
+                                type: 'text',
+                                name: 'overwrite',
+                                message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                            });
+                        }
 
                         // if no then return
                         if (askOverwrite.overwrite === "n") return;
                         // else download
 
-                        ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
+                        ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }))
                             .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 // if an error was found
@@ -223,7 +308,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                             });
                     } else {
                         // if audio hasnt already been downloaded
-                        ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
+                        ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }))
                             .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                             .on('error', (err) => {
                                 // if an error was found
@@ -241,24 +326,50 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                 if (askFormat.format === "both") {
                     // this is A LOTT of code
                     if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
-                        const askOverwrite = await prompts({
-                            type: 'text',
-                            name: 'overwrite',
-                            message: 'This has previously been downloaded as a Video, overwrite? \'Y/N\'',
-                            validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                        });
+                        let askOverwrite;
+                        if (optionBypassEnabled) {
+                            if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                            if (!optionBypass.previouslyDownloaded) {
+                                let askOverwrite = await prompts({
+                                    type: 'text',
+                                    name: 'overwrite',
+                                    message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                    validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                });
+                            }
+                        } else {
+                            let askOverwrite = await prompts({
+                                type: 'text',
+                                name: 'overwrite',
+                                message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                            });
+                        }
 
                         if (askOverwrite.overwrite === "n") return;
                         if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
-                            const askOverwrite = await prompts({
-                                type: 'text',
-                                name: 'overwrite',
-                                message: 'This has previously been downloaded as a Audio, overwrite? \'Y/N\'',
-                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                            });
+                            let askOverwrite;
+                            if (optionBypassEnabled) {
+                                if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                                if (!optionBypass.previouslyDownloaded) {
+                                    let askOverwrite = await prompts({
+                                        type: 'text',
+                                        name: 'overwrite',
+                                        message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                        validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                    });
+                                }
+                            } else {
+                                let askOverwrite = await prompts({
+                                    type: 'text',
+                                    name: 'overwrite',
+                                    message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                    validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                });
+                            }
 
                             if (askOverwrite.overwrite === "n") return;
-                            ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
+                            ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }))
                                 .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
@@ -266,7 +377,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                     return;
                                 })
                                 .on('end', () => {
-                                    ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
+                                    ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                         .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                         .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
@@ -275,11 +386,11 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                             return;
                                         })
                                         .on('end', () => {
-                                            return console.log("Succesfully completed video amd audio download!")
+                                            return console.log("Succesfully completed video and audio download!")
                                         });
                                 });
                         } else {
-                            ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
+                            ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }))
                                 .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
@@ -287,7 +398,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                     return;
                                 })
                                 .on('end', () => {
-                                    ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
+                                    ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                         .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                         .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
@@ -296,22 +407,35 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                             return;
                                         })
                                         .on('end', () => {
-                                            return console.log("Succesfully completed video amd audio download!")
+                                            return console.log("Succesfully completed video and audio download!")
                                         });
                                 });
                         }
 
                     } else {
                         if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
-                            const askOverwrite = await prompts({
-                                type: 'text',
-                                name: 'overwrite',
-                                message: 'This has previously been downloaded as a Audio, overwrite? \'Y/N\'',
-                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                            });
+                            let askOverwrite;
+                            if (optionBypassEnabled) {
+                                if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                                if (!optionBypass.previouslyDownloaded) {
+                                    let askOverwrite = await prompts({
+                                        type: 'text',
+                                        name: 'overwrite',
+                                        message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                        validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                    });
+                                }
+                            } else {
+                                let askOverwrite = await prompts({
+                                    type: 'text',
+                                    name: 'overwrite',
+                                    message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                    validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                });
+                            }
 
                             if (askOverwrite.overwrite === "n") return;
-                            ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
+                            ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }))
                                 .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
@@ -319,7 +443,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                     return;
                                 })
                                 .on('end', () => {
-                                    ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
+                                    ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                         .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                         .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
@@ -328,11 +452,11 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                             return;
                                         })
                                         .on('end', () => {
-                                            return console.log("Succesfully completed video amd audio download!")
+                                            return console.log("Succesfully completed video and audio download!")
                                         });
                                 });
                         } else {
-                            ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestaudio' }))
+                            ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }))
                                 .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
@@ -340,7 +464,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                     return;
                                 })
                                 .on('end', () => {
-                                    ffmpeg(ytdl(idArray[askVid.vid - 1], { quality: 'highestvideo' }))
+                                    ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                         .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                                         .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
@@ -349,7 +473,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                             return;
                                         })
                                         .on('end', () => {
-                                            return console.log("Succesfully completed video amd audio download!")
+                                            return console.log("Succesfully completed video and audio download!")
                                         });
                                 });
                         }
@@ -367,18 +491,35 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                 }
             }
 
-            const askFormat = await prompts({
-                type: 'select',
-                name: 'format',
-                message: 'What Format do you want to download?',
-                choices: [
-                    { title: 'Audio', value: 'mp3' },
-                    { title: 'Video', value: 'mp4' },
-                    { title: 'Both', value: 'both' }
-                ],
-            });
+            let askFormat;
+            if (optionBypassEnabled) {
+                if (optionBypass.format) askFormat = { format: optionBypass.format }
+                if (!optionBypass.format) {
+                    askFormat = await prompts({
+                        type: 'select',
+                        name: 'format',
+                        message: 'What Format do you want to download?',
+                        choices: [
+                            { title: 'Audio', value: 'mp3' },
+                            { title: 'Video', value: 'mp4' },
+                            { title: 'Both', value: 'both' }
+                        ],
+                    });
+                }
+            } else {
+                askFormat = await prompts({
+                    type: 'select',
+                    name: 'format',
+                    message: 'What Format do you want to download?',
+                    choices: [
+                        { title: 'Audio', value: 'mp3' },
+                        { title: 'Video', value: 'mp4' },
+                        { title: 'Both', value: 'both' }
+                    ],
+                });
+            }
 
-            
+
             const searched = await getVideo(link).catch(err => {
                 // if it failed to get video, log
                 return console.log("Failed to find video")
@@ -399,12 +540,25 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
 
             if (askFormat.format === "mp4") {
                 if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
-                    const askOverwrite = await prompts({
-                        type: 'text',
-                        name: 'overwrite',
-                        message: 'This has previously been downloaded, overwrite? \'Y/N\'',
-                        validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                    });
+                    let askOverwrite;
+                    if (optionBypassEnabled) {
+                        if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                        if (!optionBypass.previouslyDownloaded) {
+                            let askOverwrite = await prompts({
+                                type: 'text',
+                                name: 'overwrite',
+                                message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                            });
+                        }
+                    } else {
+                        let askOverwrite = await prompts({
+                            type: 'text',
+                            name: 'overwrite',
+                            message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                            validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                        });
+                    }
 
                     if (askOverwrite.overwrite === "n") return;
                     ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
@@ -464,12 +618,25 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
             }
             if (askFormat.format === "mp3") {
                 if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
-                    const askOverwrite = await prompts({
-                        type: 'text',
-                        name: 'overwrite',
-                        message: 'This has previously been downloaded, overwrite? \'Y/N\'',
-                        validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                    });
+                    let askOverwrite;
+                    if (optionBypassEnabled) {
+                        if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                        if (!optionBypass.previouslyDownloaded) {
+                            let askOverwrite = await prompts({
+                                type: 'text',
+                                name: 'overwrite',
+                                message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                            });
+                        }
+                    } else {
+                        let askOverwrite = await prompts({
+                            type: 'text',
+                            name: 'overwrite',
+                            message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                            validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                        });
+                    }
 
                     if (askOverwrite.overwrite === "n") return;
                     ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
@@ -493,21 +660,47 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
             }
             if (askFormat.format === "both") {
                 if (fs.existsSync(`${downloads}\\Videos\\${supportedFileName}.mp4`)) {
-                    const askOverwrite = await prompts({
-                        type: 'text',
-                        name: 'overwrite',
-                        message: 'This has previously been downloaded as a Video, overwrite? \'Y/N\'',
-                        validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                    });
+                    let askOverwrite;
+                    if (optionBypassEnabled) {
+                        if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                        if (!optionBypass.previouslyDownloaded) {
+                            let askOverwrite = await prompts({
+                                type: 'text',
+                                name: 'overwrite',
+                                message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                            });
+                        }
+                    } else {
+                        let askOverwrite = await prompts({
+                            type: 'text',
+                            name: 'overwrite',
+                            message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                            validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                        });
+                    }
 
                     if (askOverwrite.overwrite === "n") return;
                     if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
-                        const askOverwrite = await prompts({
-                            type: 'text',
-                            name: 'overwrite',
-                            message: 'This has previously been downloaded as a Audio, overwrite? \'Y/N\'',
-                            validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                        });
+                        let askOverwrite;
+                        if (optionBypassEnabled) {
+                            if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                            if (!optionBypass.previouslyDownloaded) {
+                                let askOverwrite = await prompts({
+                                    type: 'text',
+                                    name: 'overwrite',
+                                    message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                    validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                });
+                            }
+                        } else {
+                            let askOverwrite = await prompts({
+                                type: 'text',
+                                name: 'overwrite',
+                                message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                            });
+                        }
 
                         if (askOverwrite.overwrite === "n") return;
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
@@ -527,7 +720,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                         return;
                                     })
                                     .on('end', () => {
-                                        return console.log("Succesfully completed video amd audio download!")
+                                        return console.log("Succesfully completed video and audio download!")
                                     });
                             });
                     } else {
@@ -548,19 +741,32 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                         return;
                                     })
                                     .on('end', () => {
-                                        return console.log("Succesfully completed video amd audio download!")
+                                        return console.log("Succesfully completed video and audio download!")
                                     });
                             });
                     }
 
                 } else {
                     if (fs.existsSync(`${downloads}\\Audios\\${supportedFileName}.mp3`)) {
-                        const askOverwrite = await prompts({
-                            type: 'text',
-                            name: 'overwrite',
-                            message: 'This has previously been downloaded as a Audio, overwrite? \'Y/N\'',
-                            validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
-                        });
+                        let askOverwrite;
+                        if (optionBypassEnabled) {
+                            if (optionBypass.previouslyDownloaded) askOverwrite = { overwrite: optionBypass.previouslyDownloaded }
+                            if (!optionBypass.previouslyDownloaded) {
+                                let askOverwrite = await prompts({
+                                    type: 'text',
+                                    name: 'overwrite',
+                                    message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                    validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                                });
+                            }
+                        } else {
+                            let askOverwrite = await prompts({
+                                type: 'text',
+                                name: 'overwrite',
+                                message: 'This has previously been downloaded, overwrite? \'Y/N\'',
+                                validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+                            });
+                        }
 
                         if (askOverwrite.overwrite === "n") return;
                         ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
@@ -580,7 +786,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                         return;
                                     })
                                     .on('end', () => {
-                                        return console.log("Succesfully completed video amd audio download!")
+                                        return console.log("Succesfully completed video and audio download!")
                                     });
                             });
                     } else {
@@ -601,7 +807,7 @@ let debug = false; // change this to true if you wnat debug mode, deleting that 
                                         return;
                                     })
                                     .on('end', () => {
-                                        return console.log("Succesfully completed video amd audio download!")
+                                        return console.log("Succesfully completed video and audio download!")
                                     });
                             });
                     }
