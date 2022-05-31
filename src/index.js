@@ -182,6 +182,7 @@ let optionBypass = {
                             { title: '4320p (8k)', value: '4320' }
                         ],
                     });
+                    quality = askQuality.quality
                 }
 
                 // a lot of code just to make sure that the file wont fail due to a character in the title that windows doesnt like
@@ -559,6 +560,7 @@ let optionBypass = {
                         { title: '4320p (8k)', value: '4320' }
                     ],
                 });
+                quality = askQuality.quality
             }
 
 
