@@ -26,6 +26,9 @@ let optionBypass = {
 
 */
 let optionBypass = {
+    query: "https://www.youtube.com/watch?v=HRW9W7ZtOEI",
+    format: "mp4",
+    previouslyDownloaded: "y",
 };
 
 (async () => {
@@ -155,6 +158,49 @@ let optionBypass = {
                     });
                 }
 
+                // ask the quality
+                let askQuality;
+                if (optionBypassEnabled) {
+                    if (optionBypass.quality) askQuality = { quality: optionBypass.quality }
+                    if (!optionBypass.quality) {
+                        askQuality = await prompts({
+                            type: 'select',
+                            name: 'quality',
+                            message: 'What Quality do you want to download?',
+                            choices: [
+                                { title: 'Default (1080p)', value: '1080' },
+                                { title: '144p', value: '144' },
+                                { title: '240p', value: '240' },
+                                { title: '360p', value: '360' },
+                                { title: '480p', value: '480' },
+                                { title: '720p', value: '720' },
+                                { title: '1080p (hd)', value: '1080' },
+                                { title: '1440p (hd)', value: '1440' },
+                                { title: '2160p (4k)', value: '2160' },
+                                { title: '4320p (8k)', value: '4320' }
+                            ],
+                        });
+                    }
+                } else {
+                    askQuality = await prompts({
+                        type: 'select',
+                        name: 'quality',
+                        message: 'What Quality do you want to download?',
+                        choices: [
+                            { title: 'Default (1080p)', value: '1080' },
+                            { title: '144p', value: '144' },
+                            { title: '240p', value: '240' },
+                            { title: '360p', value: '360' },
+                            { title: '480p', value: '480' },
+                            { title: '720p', value: '720' },
+                            { title: '1080p (hd)', value: '1080' },
+                            { title: '1440p (hd)', value: '1440' },
+                            { title: '2160p (4k)', value: '2160' },
+                            { title: '4320p (8k)', value: '4320' }
+                        ],
+                    });
+                }
+
                 // a lot of code just to make sure that the file wont fail due to a character in the title that windows doesnt like
                 let supportedFileName = rawSearchArray[vidNum - 1];
                 supportedFileName = supportedFileName.replaceAll("\\", "");
@@ -211,6 +257,7 @@ let optionBypass = {
                                 // downloading video
                                 ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                     .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                    .size(`?x${askQuality.quality}`)
                                     .save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
                                     .on('error', (err) => {
                                         // if a error was found downloading video
@@ -245,6 +292,7 @@ let optionBypass = {
                                 // downloading video
                                 ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                     .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                    .size(`?x${askQuality.quality}`)
                                     .save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
                                     .on('error', (err) => {
                                         // if a error was found downloading video
@@ -379,6 +427,7 @@ let optionBypass = {
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                         .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                        .size(`?x${askQuality.quality}`)
                                         .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
                                             console.log("An FFmpeg Error Occurred, Sorry!")
@@ -400,6 +449,7 @@ let optionBypass = {
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                         .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                        .size(`?x${askQuality.quality}`)
                                         .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
                                             console.log("An FFmpeg Error Occurred, Sorry!")
@@ -445,6 +495,7 @@ let optionBypass = {
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                         .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                        .size(`?x${askQuality.quality}`)
                                         .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
                                             console.log("An FFmpeg Error Occurred, Sorry!")
@@ -466,6 +517,7 @@ let optionBypass = {
                                 .on('end', () => {
                                     ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }))
                                         .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                        .size(`?x${askQuality.quality}`)
                                         .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                         .on('error', (err) => {
                                             console.log("An FFmpeg Error Occurred, Sorry!")
@@ -527,6 +579,49 @@ let optionBypass = {
 
             if (!searched) return; // this just stops the code below from running if no video was found
 
+            // ask the quality
+            let askQuality;
+            if (optionBypassEnabled) {
+                if (optionBypass.quality) askQuality = { quality: optionBypass.quality }
+                if (!optionBypass.quality) {
+                    askQuality = await prompts({
+                        type: 'select',
+                        name: 'quality',
+                        message: 'What Quality do you want to download?',
+                        choices: [
+                            { title: 'Default (1080p)', value: '1080' },
+                            { title: '144p', value: '144' },
+                            { title: '240p', value: '240' },
+                            { title: '360p', value: '360' },
+                            { title: '480p', value: '480' },
+                            { title: '720p', value: '720' },
+                            { title: '1080p (hd)', value: '1080' },
+                            { title: '1440p (hd)', value: '1440' },
+                            { title: '2160p (4k)', value: '2160' },
+                            { title: '4320p (8k)', value: '4320' }
+                        ],
+                    });
+                }
+            } else {
+                askQuality = await prompts({
+                    type: 'select',
+                    name: 'quality',
+                    message: 'What Quality do you want to download?',
+                    choices: [
+                        { title: 'Default (1080p)', value: '1080' },
+                        { title: '144p', value: '144' },
+                        { title: '240p', value: '240' },
+                        { title: '360p', value: '360' },
+                        { title: '480p', value: '480' },
+                        { title: '720p', value: '720' },
+                        { title: '1080p (hd)', value: '1080' },
+                        { title: '1440p (hd)', value: '1440' },
+                        { title: '2160p (4k)', value: '2160' },
+                        { title: '4320p (8k)', value: '4320' }
+                    ],
+                });
+            }
+
             let supportedFileName = searched.title;
             supportedFileName = supportedFileName.replaceAll("\\", "");
             supportedFileName = supportedFileName.replaceAll("/", "");
@@ -571,6 +666,7 @@ let optionBypass = {
                         .on('end', () => {
                             ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                 .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                .size(`?x${askQuality.quality}`)
                                 .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
@@ -598,6 +694,7 @@ let optionBypass = {
                         .on('end', () => {
                             ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                 .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                                .size(`?x${askQuality.quality}`)
                                 .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                 .on('error', (err) => {
                                     console.log("An FFmpeg Error Occurred, Sorry!")
@@ -713,6 +810,7 @@ let optionBypass = {
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                     .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                    .size(`?x${askQuality.quality}`)
                                     .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
@@ -734,6 +832,7 @@ let optionBypass = {
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                     .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                    .size(`?x${askQuality.quality}`)
                                     .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
@@ -779,6 +878,7 @@ let optionBypass = {
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                     .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                    .size(`?x${askQuality.quality}`)
                                     .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
@@ -800,6 +900,7 @@ let optionBypass = {
                             .on('end', () => {
                                 ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                     .addInput(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                                    .size(`?x${askQuality.quality}`)
                                     .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                     .on('error', (err) => {
                                         console.log("An FFmpeg Error Occurred, Sorry!")
