@@ -3,6 +3,8 @@ const ytdl = require('ytdl-core');
 const { search } = require('youtube-sr').default;
 const { getVideo } = require('youtube-sr').default;
 const chalk = require('chalk');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 const ffmpeg = require('fluent-ffmpeg');
 const prompts = require('prompts');
 const { resolve } = require('path');
@@ -12,8 +14,8 @@ let searchLimit = 10; // change this if you want to search for more or less resu
 let debug = false; // change this to true if you wnat debug mode, deleting that file also enables this
 const presets = require(`${resolve(__dirname, '..')}\\presets.json`);
 let presetUse = false;
-ffmpeg.setFfmpegPath(`${resolve(__dirname, '..')}\\FFmpeg\\ffmpeg.exe`);
-ffmpeg.setFfprobePath(`${resolve(__dirname, '..')}\\FFmpeg\\ffprobe.exe`);
+ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(ffprobePath);
 let presetOption = {
 }
 /* optionBypass example
