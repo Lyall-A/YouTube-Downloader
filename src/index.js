@@ -677,7 +677,7 @@ let optionBypass = {
                     let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                     if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                     if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
-                    audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                    audioFfmpeg.save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                     audioFfmpeg.on('error', (err) => {
                         // if a error was found downloading audio
                         console.log("An FFmpeg Error Occurred, Sorry!")
@@ -691,7 +691,7 @@ let optionBypass = {
                     let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                     if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                     if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
-                    audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                    audioFfmpeg.save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
                     audioFfmpeg.on('error', (err) => {
                         // if a error was found downloading audio
                         console.log("An FFmpeg Error Occurred, Sorry!")
