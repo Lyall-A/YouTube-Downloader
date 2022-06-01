@@ -7,7 +7,7 @@
             "videoBitrate": null,
             "audioBitrate": 8,
             "framerate": 10,
-            "format": "mp4",
+            "format": null,
             "overwrite": false,
             "volume": "1"
         }
