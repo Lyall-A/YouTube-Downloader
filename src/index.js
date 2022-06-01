@@ -161,28 +161,30 @@ let optionBypass = {
                     });
                 }
 
-                // ask the quality
-                let askQuality;
-                if (quality) askQuality = { quality }
-                if (!quality) {
-                    askQuality = await prompts({
-                        type: 'select',
-                        name: 'quality',
-                        message: 'What Quality do you want to download?',
-                        choices: [
-                            { title: 'Default (1080p)', value: '1080' },
-                            { title: '144p', value: '144' },
-                            { title: '240p', value: '240' },
-                            { title: '360p', value: '360' },
-                            { title: '480p', value: '480' },
-                            { title: '720p', value: '720' },
-                            { title: '1080p (hd)', value: '1080' },
-                            { title: '1440p (hd)', value: '1440' },
-                            { title: '2160p (4k)', value: '2160' },
-                            { title: '4320p (8k)', value: '4320' }
-                        ],
-                    });
-                    quality = askQuality.quality
+                if (askFormat.format !== "mp3") {
+                    // ask the quality
+                    let askQuality;
+                    if (quality) askQuality = { quality }
+                    if (!quality) {
+                        askQuality = await prompts({
+                            type: 'select',
+                            name: 'quality',
+                            message: 'What Quality do you want to download?',
+                            choices: [
+                                { title: 'Default (1080p)', value: '1080' },
+                                { title: '144p', value: '144' },
+                                { title: '240p', value: '240' },
+                                { title: '360p', value: '360' },
+                                { title: '480p', value: '480' },
+                                { title: '720p', value: '720' },
+                                { title: '1080p (hd)', value: '1080' },
+                                { title: '1440p (hd)', value: '1440' },
+                                { title: '2160p (4k)', value: '2160' },
+                                { title: '4320p (8k)', value: '4320' }
+                            ],
+                        });
+                        quality = askQuality.quality
+                    }
                 }
 
                 // a lot of code just to make sure that the file wont fail due to a character in the title that windows doesnt like
@@ -538,29 +540,30 @@ let optionBypass = {
 
             if (!searched) return; // this just stops the code below from running if no video was found
 
-            // ask the quality
-            let askQuality;
-
-            if (quality) askQuality = { quality }
-            if (!quality) {
-                askQuality = await prompts({
-                    type: 'select',
-                    name: 'quality',
-                    message: 'What Quality do you want to download?',
-                    choices: [
-                        { title: 'Default (1080p)', value: '1080' },
-                        { title: '144p', value: '144' },
-                        { title: '240p', value: '240' },
-                        { title: '360p', value: '360' },
-                        { title: '480p', value: '480' },
-                        { title: '720p', value: '720' },
-                        { title: '1080p (hd)', value: '1080' },
-                        { title: '1440p (hd)', value: '1440' },
-                        { title: '2160p (4k)', value: '2160' },
-                        { title: '4320p (8k)', value: '4320' }
-                    ],
-                });
-                quality = askQuality.quality
+            if (askFormat.format !== "mp3") {
+                // ask the quality
+                let askQuality;
+                if (quality) askQuality = { quality }
+                if (!quality) {
+                    askQuality = await prompts({
+                        type: 'select',
+                        name: 'quality',
+                        message: 'What Quality do you want to download?',
+                        choices: [
+                            { title: 'Default (1080p)', value: '1080' },
+                            { title: '144p', value: '144' },
+                            { title: '240p', value: '240' },
+                            { title: '360p', value: '360' },
+                            { title: '480p', value: '480' },
+                            { title: '720p', value: '720' },
+                            { title: '1080p (hd)', value: '1080' },
+                            { title: '1440p (hd)', value: '1440' },
+                            { title: '2160p (4k)', value: '2160' },
+                            { title: '4320p (8k)', value: '4320' }
+                        ],
+                    });
+                    quality = askQuality.quality
+                }
             }
 
 
@@ -592,61 +595,67 @@ let optionBypass = {
 
                     if (askOverwrite.overwrite.toLowerCase() === "n") return;
                     let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                        .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                        .on('error', (err) => {
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                            if (debug) console.log(err)
-                            return;
-                        })
-                        .on('end', () => {
-                            let videoFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                                .size(`?x${askQuality.quality}`)
-                                .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
-                                .on('error', (err) => {
-                                    console.log("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) console.log(err)
-                                    return;
-                                })
-                                .on('end', () => {
-                                    unlink()
-                                    function unlink() {
-                                        fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
-                                            if (err) unlink()
-                                        });
-                                    }
-                                    return console.log("Succesfully completed video download!")
-                                });
-                            if (presetOption.framerate) videoFfmpeg.addOutputOption(`-filter:v fps=${presetOption.framerate}`)
-                        });
+                    if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
+                    if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
+                    audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                    audioFfmpeg.on('error', (err) => {
+                        // if a error was found downloading audio
+                        console.log("An FFmpeg Error Occurred, Sorry!")
+                        if (debug) console.log(err)
+                        return;
+                    });
+                    audioFfmpeg.on('end', () => {
+                        let videoFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
+                            .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                            .size(`?x${quality}`)
+                            .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
+                            .on('error', (err) => {
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
+                            })
+                            .on('end', () => {
+                                unlink()
+                                function unlink() {
+                                    fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                        if (err) unlink()
+                                    });
+                                }
+                                return console.log("Succesfully completed video download!")
+                            });
+                        if (presetOption.framerate) videoFfmpeg.addOutputOption(`-filter:v fps=${presetOption.framerate}`)
+                    });
                 } else {
                     let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                        .save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                        .on('error', (err) => {
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                            if (debug) console.log(err)
-                            return;
-                        })
-                        .on('end', () => {
-                            let videoFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                                .size(`?x${askQuality.quality}`)
-                                .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
-                                .on('error', (err) => {
-                                    console.log("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) console.log(err)
-                                    return;
-                                })
-                                .on('end', () => {
-                                    unlink()
-                                    function unlink() {
-                                        fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
-                                            if (err) unlink()
-                                        });
-                                    }
-                                    return console.log("Succesfully completed video download!")
-                                });
-                        });
+                    if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
+                    if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
+                    audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                    audioFfmpeg.on('error', (err) => {
+                        // if a error was found downloading audio
+                        console.log("An FFmpeg Error Occurred, Sorry!")
+                        if (debug) console.log(err)
+                        return;
+                    });
+                    audioFfmpeg.on('end', () => {
+                        let videoFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
+                            .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                            .size(`?x${quality}`)
+                            .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
+                            .on('error', (err) => {
+                                console.log("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) console.log(err)
+                                return;
+                            })
+                            .on('end', () => {
+                                unlink()
+                                function unlink() {
+                                    fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                        if (err) unlink()
+                                    });
+                                }
+                                return console.log("Succesfully completed video download!")
+                            });
+                    });
                 }
             }
             if (askFormat.format === "mp3") {
@@ -666,22 +675,32 @@ let optionBypass = {
 
                     if (askOverwrite.overwrite.toLowerCase() === "n") return;
                     let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                        .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
-                        .on('error', (err) => {
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                        })
-                        .on('end', () => {
-                            console.log("Succesfully completed audio download!")
-                        });
+                    if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
+                    if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
+                    audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                    audioFfmpeg.on('error', (err) => {
+                        // if a error was found downloading audio
+                        console.log("An FFmpeg Error Occurred, Sorry!")
+                        if (debug) console.log(err)
+                        return;
+                    });
+                    audioFfmpeg.on('end', () => {
+                        console.log("Succesfully completed audio download!")
+                    });
                 } else {
                     let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
-                        .save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
-                        .on('error', (err) => {
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                        })
-                        .on('end', () => {
-                            console.log("Succesfully completed audio download!")
-                        });
+                    if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
+                    if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
+                    audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                    audioFfmpeg.on('error', (err) => {
+                        // if a error was found downloading audio
+                        console.log("An FFmpeg Error Occurred, Sorry!")
+                        if (debug) console.log(err)
+                        return;
+                    });
+                    audioFfmpeg.on('end', () => {
+                        console.log("Succesfully completed audio download!")
+                    });
                 }
             }
             if (askFormat.format === "both") {
