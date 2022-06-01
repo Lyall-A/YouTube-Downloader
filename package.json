@@ -18,6 +18,7 @@
   "dependencies": {
     "chalk": "^4.1.2",
     "fluent-ffmpeg": "^2.1.2",
+    "node-fetch": "^2.6.7",
     "prompts": "^2.4.2",
     "youtube-sr": "^4.1.17",
     "ytdl-core": "^4.11.0"
