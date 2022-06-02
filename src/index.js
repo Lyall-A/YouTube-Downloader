@@ -52,22 +52,16 @@ let optionBypass = {
                         start()
                     } else {
                         execFile('git', ['stash', 'save'], (err) => {
-                            if (err) {
-                                if (!debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
-                                if (debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
-                                start()
-                            } else {
-                                execFile('git', ['pull'], (err) => {
-                                    if (err) {
-                                        if (!debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
-                                        if (debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
-                                        start()
-                                    } else {
-                                        console.log("Installed update!")
-                                        start()
-                                    }
-                                });
-                            }
+                            execFile('git', ['pull'], (err) => {
+                                if (err) {
+                                    if (!debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
+                                    if (debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
+                                    start()
+                                } else {
+                                    console.log("Installed update!")
+                                    start()
+                                }
+                            });
                         })
                     }
                 });
