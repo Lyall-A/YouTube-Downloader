@@ -9,11 +9,11 @@ const ffmpeg = require('fluent-ffmpeg');
 const prompts = require('prompts');
 const { resolve } = require('path');
 const fs = require('fs');
+const { spawn, execFile } = require('child_process');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
 let searchLimit = 10; // change this if you want to search for more or less results
 let debug = false; // change this to true if you wnat debug mode, deleting that file also enables this
 const presets = require(`${resolve(__dirname, '..')}\\presets.json`);
-let presetUse = false;
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 let presetOption = {
@@ -38,6 +38,34 @@ let optionBypass = {
 };
 
 (async () => {
+
+    await fetch('https://raw.githubusercontent.com/lyall-pc/YouTube-Downloader/main/package.json').then(res => res.json()).then(package => {
+        if (package.version !== require(`${resolve(__dirname, '..')}\\package.json`).version) {
+            if (!fs.existsSync(`${resolve(__dirname, '..')}\\dev`)) {
+                execFile('git', ['--version'], (err) => {
+                    if (err) {
+                        console.log("An update was found, but cannot automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
+                        start()
+                    } else {
+                        execFile('git', ['pull'], (err) => {
+                            if (err) {
+                                if (!debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
+                                if (debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
+                                start()
+                            }
+                            console.log("Installed update!")
+                        });
+                    }
+                  });
+            } else {
+                start()
+            }
+        } else {
+            start()
+        }
+    });
+
+    function start() {
     // check if the file exists, if not then debug mode will be enabled
     if (!fs.existsSync(resolve(__dirname, '..') + "\\Delete this if you know what your doing")) debug = true;
 
@@ -71,7 +99,6 @@ let optionBypass = {
                 });
 
                 if (askPreset.preset !== "none") {
-                    presetUse = true;
                     presetOption = presets[preset].config
                 }
             }
@@ -552,5 +579,6 @@ let optionBypass = {
             }
             return;
         }
+    }
     }
 })();
