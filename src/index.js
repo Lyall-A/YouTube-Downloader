@@ -40,6 +40,9 @@ let optionBypass = {
 
 (async () => {
 
+    // check if the file exists, if not then debug mode will be enabled
+    if (!fs.existsSync(resolve(__dirname, '..') + "\\Delete this if you know what your doing")) debug = true;
+
     await fetch('https://raw.githubusercontent.com/lyall-pc/YouTube-Downloader/main/package.json').then(res => res.json()).then(package => {
         if (package.version !== require(`${resolve(__dirname, '..')}\\package.json`).version) {
             if (!fs.existsSync(`${resolve(__dirname, '..')}\\dev`)) {
@@ -69,8 +72,6 @@ let optionBypass = {
     });
 
     async function start() {
-        // check if the file exists, if not then debug mode will be enabled
-        if (!fs.existsSync(resolve(__dirname, '..') + "\\Delete this if you know what your doing")) debug = true;
 
         // if debug mode is on it runs this
         if (debug === true) {
