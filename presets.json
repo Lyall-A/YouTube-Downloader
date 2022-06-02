@@ -4,7 +4,7 @@
         "config": {
             "videos": null,
             "quality": 100,
-            "videoBitrate": "200k",
+            "videoBitrate": "100k",
             "audioBitrate": "8k",
             "framerate": 20,
             "format": null,
