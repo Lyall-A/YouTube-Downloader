@@ -3,10 +3,10 @@
         "name": "Bad Quality",
         "config": {
             "videos": null,
-            "quality": 100,
-            "videoBitrate": null,
-            "audioBitrate": 8,
-            "framerate": 10,
+            "quality": 240,
+            "videoBitrate": "500k",
+            "audioBitrate": "8k",
+            "framerate": 20,
             "format": null,
             "overwrite": false,
             "volume": "1"
