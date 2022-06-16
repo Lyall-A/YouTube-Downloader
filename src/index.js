@@ -280,6 +280,14 @@ let optionBypass = {
                                 // downloading video
                                 write("Downloading video")
                                 let videoFfmpeg = ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }));
+                                videoFfmpeg.on('codecData', (data) => {
+                                    totalTime = parseInt(data.duration.replace(/:/g, ''));
+                                });
+                                videoFfmpeg.on('progress', (prog) => {
+                                    if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                                    const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                                    return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                                });
                                 videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                                 if (presetOption.framerate) videoFfmpeg.fpsOutput(presetOption.framerate)
                                 if (presetOption.videoBitrate) videoFfmpeg.videoBitrate(presetOption.videoBitrate)
@@ -320,6 +328,14 @@ let optionBypass = {
                                 // downloading video
                                 write("Downloading video")
                                 let videoFfmpeg = ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }));
+                                videoFfmpeg.on('codecData', (data) => {
+                                    totalTime = parseInt(data.duration.replace(/:/g, ''));
+                                });
+                                videoFfmpeg.on('progress', (prog) => {
+                                    if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                                    const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                                    return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                                });
                                 videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                                 if (presetOption.framerate) videoFfmpeg.fpsOutput(presetOption.framerate)
                                 if (presetOption.videoBitrate) videoFfmpeg.videoBitrate(presetOption.videoBitrate)
@@ -514,23 +530,31 @@ let optionBypass = {
                         audioFfmpeg.on('end', () => {
                             write("Downloading video")
                             let videoFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                                .size(`?x${quality}`)
-                                .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
-                                .on('error', (err) => {
-                                    write("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) write(err)
-                                    return;
-                                })
-                                .on('end', () => {
-                                    unlink()
-                                    function unlink() {
-                                        fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
-                                            if (err) unlink()
-                                        });
-                                    }
-                                    return write("Succesfully completed video download!")
-                                });
+                            videoFfmpeg.on('codecData', (data) => {
+                                totalTime = parseInt(data.duration.replace(/:/g, ''));
+                            });
+                            videoFfmpeg.on('progress', (prog) => {
+                                if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                                const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                                return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                            });
+                            videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                            videoFfmpeg.size(`?x${quality}`)
+                            videoFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
+                            videoFfmpeg.on('error', (err) => {
+                                write("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) write(err)
+                                return;
+                            })
+                            videoFfmpeg.on('end', () => {
+                                unlink()
+                                function unlink() {
+                                    fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                        if (err) unlink()
+                                    });
+                                }
+                                return write("Succesfully completed video download!")
+                            });
                             if (presetOption.framerate) videoFfmpeg.addOutputOption(`-filter:v fps=${presetOption.framerate}`)
                         });
                     } else {
@@ -548,23 +572,31 @@ let optionBypass = {
                         audioFfmpeg.on('end', () => {
                             write("Downloading video")
                             let videoFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
-                                .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
-                                .size(`?x${quality}`)
-                                .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
-                                .on('error', (err) => {
-                                    write("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) write(err)
-                                    return;
-                                })
-                                .on('end', () => {
-                                    unlink()
-                                    function unlink() {
-                                        fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
-                                            if (err) unlink()
-                                        });
-                                    }
-                                    return write("Succesfully completed video download!")
-                                });
+                            videoFfmpeg.on('codecData', (data) => {
+                                totalTime = parseInt(data.duration.replace(/:/g, ''));
+                            });
+                            videoFfmpeg.on('progress', (prog) => {
+                                if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                                const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                                return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                            });
+                            videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
+                            videoFfmpeg.size(`?x${quality}`)
+                            videoFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
+                            videoFfmpeg.on('error', (err) => {
+                                write("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) write(err)
+                                return;
+                            })
+                            videoFfmpeg.on('end', () => {
+                                unlink()
+                                function unlink() {
+                                    fs.unlink(`${downloads}\\Videos\\${supportedFileName}.mp3`, (err) => {
+                                        if (err) unlink()
+                                    });
+                                }
+                                return write("Succesfully completed video download!")
+                            });
                         });
                     }
                 }
