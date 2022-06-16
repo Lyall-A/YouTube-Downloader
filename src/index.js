@@ -8,6 +8,12 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 const ffmpeg = require('fluent-ffmpeg');
 const prompts = require('prompts');
 const fetch = require('node-fetch');
+let totalTime = 0;
+function write(text) {
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
+    return process.stdout.write(text);
+}
 const { resolve } = require('path');
 const fs = require('fs');
 const { spawn, execFile } = require('child_process');
@@ -48,17 +54,17 @@ let optionBypass = {
             if (!fs.existsSync(`${resolve(__dirname, '..')}\\dev`)) {
                 execFile('git', ['--version'], (err) => {
                     if (err) {
-                        console.log("An update was found, but cannot automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
+                        write("An update was found, but cannot automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
                         start()
                     } else {
                         execFile('git', ['stash', 'save'], (err) => {
                             execFile('git', ['pull'], (err) => {
                                 if (err) {
-                                    if (!debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
-                                    if (debug) console.log("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
+                                    if (!debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
+                                    if (debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
                                     start()
                                 } else {
-                                    console.log("Installed update!")
+                                    write("Installed update!")
                                     start()
                                 }
                             });
@@ -78,9 +84,9 @@ let optionBypass = {
         // if debug mode is on it runs this
         if (debug === true) {
             let old = { mkdirSync: fs.mkdirSync }
-            console.log(chalk.red("DEBUG MODE IS ENABLED"))
+            write(chalk.red("DEBUG MODE IS ENABLED"))
             fs.mkdirSync = function (dir) {
-                console.log(`Creating directory ${dir}`)
+                write(`Creating directory ${dir}`)
                 old.mkdirSync(dir);
             }
         }
@@ -139,7 +145,7 @@ let optionBypass = {
                 // get video details using youtube api
                 const searched = await search(askYouTube.youtube, { limit: searchLimit });
                 if (!searched[0]) {
-                    return console.log(chalk.red("No results where found"))
+                    return write(chalk.red("No results where found"))
                 }
 
                 let query = 0;
@@ -169,7 +175,7 @@ let optionBypass = {
                 async function searchContinue() {
                     let vidNum;
                     if (searchLimit !== 1) {
-                        console.log("\n" + searchArray.join('\n') + "\n")
+                        write("\n" + searchArray.join('\n') + "\n")
                         // ask what video you want to choose, 1 out of the specified limit
 
                         const askVid = await prompts({
@@ -257,20 +263,22 @@ let optionBypass = {
 
                             // downloading audio
                             // if the video hasnt already been downloaded
+                            write("Downloading audio")
                             let audioFfmpeg = ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }));
                             if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                             if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
                             audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                             audioFfmpeg.on('error', (err) => {
                                 // if a error was found downloading audio
-                                console.log("An FFmpeg Error Occurred, Sorry!")
-                                if (debug) console.log(err)
+                                write("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) write(err)
                                 return;
                             });
                             audioFfmpeg.on('end', () => {
                                 // if the audio download finished
 
                                 // downloading video
+                                write("Downloading video")
                                 let videoFfmpeg = ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }));
                                 videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                                 if (presetOption.framerate) videoFfmpeg.fpsOutput(presetOption.framerate)
@@ -278,8 +286,8 @@ let optionBypass = {
                                 videoFfmpeg.size(`?x${quality}`).save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
                                 videoFfmpeg.on('error', (err) => {
                                     // if a error was found downloading video
-                                    console.log("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) console.log(err)
+                                    write("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) write(err)
                                     return;
                                 })
                                 videoFfmpeg.on('end', () => {
@@ -290,25 +298,27 @@ let optionBypass = {
                                             if (err) unlink()
                                         });
                                     }
-                                    return console.log("Succesfully completed video download!")
+                                    return write("Succesfully completed video download!")
                                 });
                             });
                         } else {
                             // if the video hasnt already been downloaded
+                            write("Downloading audio")
                             let audioFfmpeg = ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }));
                             if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                             if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
                             audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                             audioFfmpeg.on('error', (err) => {
                                 // if a error was found downloading audio
-                                console.log("An FFmpeg Error Occurred, Sorry!")
-                                if (debug) console.log(err)
+                                write("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) write(err)
                                 return;
                             });
                             audioFfmpeg.on('end', () => {
                                 // if the audio download finished
 
                                 // downloading video
+                                write("Downloading video")
                                 let videoFfmpeg = ffmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }));
                                 videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                                 if (presetOption.framerate) videoFfmpeg.fpsOutput(presetOption.framerate)
@@ -316,8 +326,8 @@ let optionBypass = {
                                 videoFfmpeg.size(`?x${quality}`).save(`${downloads}\\Videos\\${supportedFileName}.mp4`) // this adds the audio that was downloaded earlier to the mp4
                                 videoFfmpeg.on('error', (err) => {
                                     // if a error was found downloading video
-                                    console.log("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) console.log(err)
+                                    write("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) write(err)
                                     return;
                                 })
                                 videoFfmpeg.on('end', () => {
@@ -328,7 +338,7 @@ let optionBypass = {
                                             if (err) unlink()
                                         });
                                     }
-                                    return console.log("Succesfully completed video download!")
+                                    return write("Succesfully completed video download!")
                                 });
                             });
                         }
@@ -357,15 +367,23 @@ let optionBypass = {
                             if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                             if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
                             audioFfmpeg.save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                            audioFfmpeg.on('codecData', (data) => {
+                                totalTime = parseInt(data.duration.replace(/:/g, ''));
+                            });
+                            audioFfmpeg.on('progress', (prog) => {
+                                if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                                const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                                return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                            });
                             audioFfmpeg.on('error', (err) => {
                                 // if an error was found
-                                console.log("An FFmpeg Error Occurred, Sorry!")
-                                if (debug) console.log(err)
+                                write("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) write(err)
                                 return;
                             })
                             audioFfmpeg.on('end', () => {
                                 // if audio finished downloading
-                                return console.log("Succesfully completed audio download!")
+                                return write("Succesfully completed audio download!")
                             });
                         } else {
                             // if audio hasnt already been downloaded
@@ -373,15 +391,23 @@ let optionBypass = {
                             if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                             if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
                             audioFfmpeg.save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                            audioFfmpeg.on('codecData', (data) => {
+                                totalTime = parseInt(data.duration.replace(/:/g, ''));
+                            });
+                            audioFfmpeg.on('progress', (prog) => {
+                                if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                                const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                                return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                            });
                             audioFfmpeg.on('error', (err) => {
                                 // if an error was found
-                                console.log("An FFmpeg Error Occurred, Sorry!")
-                                if (debug) console.log(err)
+                                write("An FFmpeg Error Occurred, Sorry!")
+                                if (debug) write(err)
                                 return;
                             })
                             audioFfmpeg.on('end', () => {
                                 // if audio finished downloading
-                                return console.log("Succesfully completed audio download!")
+                                return write("Succesfully completed audio download!")
                             });
                         }
                     }
@@ -392,7 +418,7 @@ let optionBypass = {
                 let link = askYouTube.youtube;
                 if (!link.split("/")[2].endsWith("youtu.be")) {
                     if (!link.split("/")[2].endsWith("youtube.com")) {
-                        return console.log("Invalid URL")
+                        return write("Invalid URL")
                     }
                 }
 
@@ -415,7 +441,7 @@ let optionBypass = {
 
                 const searched = await getVideo(link).catch(err => {
                     // if it failed to get video, log
-                    return console.log("Failed to find video")
+                    return write("Failed to find video")
                 });
 
                 if (!searched) return; // this just stops the code below from running if no video was found
@@ -474,24 +500,26 @@ let optionBypass = {
 
 
                         if (askOverwrite.overwrite.toLowerCase() === "n") return;
+                        write("Downloading audio")
                         let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                         if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                         if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
                         audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                         audioFfmpeg.on('error', (err) => {
                             // if a error was found downloading audio
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                            if (debug) console.log(err)
+                            write("An FFmpeg Error Occurred, Sorry!")
+                            if (debug) write(err)
                             return;
                         });
                         audioFfmpeg.on('end', () => {
+                            write("Downloading video")
                             let videoFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                 .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                                 .size(`?x${quality}`)
                                 .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                 .on('error', (err) => {
-                                    console.log("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) console.log(err)
+                                    write("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) write(err)
                                     return;
                                 })
                                 .on('end', () => {
@@ -501,29 +529,31 @@ let optionBypass = {
                                             if (err) unlink()
                                         });
                                     }
-                                    return console.log("Succesfully completed video download!")
+                                    return write("Succesfully completed video download!")
                                 });
                             if (presetOption.framerate) videoFfmpeg.addOutputOption(`-filter:v fps=${presetOption.framerate}`)
                         });
                     } else {
+                        write("Downloading audio")
                         let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                         if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                         if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
                         audioFfmpeg.save(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                         audioFfmpeg.on('error', (err) => {
                             // if a error was found downloading audio
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                            if (debug) console.log(err)
+                            write("An FFmpeg Error Occurred, Sorry!")
+                            if (debug) write(err)
                             return;
                         });
                         audioFfmpeg.on('end', () => {
+                            write("Downloading video")
                             let videoFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestvideo' }))
                                 .addInput(`${downloads}\\Videos\\${supportedFileName}.mp3`)
                                 .size(`?x${quality}`)
                                 .save(`${downloads}\\Videos\\${supportedFileName}.mp4`)
                                 .on('error', (err) => {
-                                    console.log("An FFmpeg Error Occurred, Sorry!")
-                                    if (debug) console.log(err)
+                                    write("An FFmpeg Error Occurred, Sorry!")
+                                    if (debug) write(err)
                                     return;
                                 })
                                 .on('end', () => {
@@ -533,7 +563,7 @@ let optionBypass = {
                                             if (err) unlink()
                                         });
                                     }
-                                    return console.log("Succesfully completed video download!")
+                                    return write("Succesfully completed video download!")
                                 });
                         });
                     }
@@ -558,28 +588,44 @@ let optionBypass = {
                         if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                         if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
                         audioFfmpeg.save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                        audioFfmpeg.on('codecData', (data) => {
+                            totalTime = parseInt(data.duration.replace(/:/g, ''));
+                        });
+                        audioFfmpeg.on('progress', (prog) => {
+                            if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                            const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                            return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                        });
                         audioFfmpeg.on('error', (err) => {
                             // if a error was found downloading audio
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                            if (debug) console.log(err)
+                            write("An FFmpeg Error Occurred, Sorry!")
+                            if (debug) write(err)
                             return;
                         });
                         audioFfmpeg.on('end', () => {
-                            console.log("Succesfully completed audio download!")
+                            write("Succesfully completed audio download!")
                         });
                     } else {
                         let audioFfmpeg = ffmpeg(ytdl(searched.id, { quality: 'highestaudio' }))
                         if (presetOption.audioBitrate) audioFfmpeg.audioBitrate(presetOption.audioBitrate)
                         if (presetOption.volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${presetOption.volume}`)
                         audioFfmpeg.save(`${downloads}\\Audios\\${supportedFileName}.mp3`)
+                        audioFfmpeg.on('codecData', (data) => {
+                            totalTime = parseInt(data.duration.replace(/:/g, ''));
+                        });
+                        audioFfmpeg.on('progress', (prog) => {
+                            if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                            const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                            return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                        });
                         audioFfmpeg.on('error', (err) => {
                             // if a error was found downloading audio
-                            console.log("An FFmpeg Error Occurred, Sorry!")
-                            if (debug) console.log(err)
+                            write("An FFmpeg Error Occurred, Sorry!")
+                            if (debug) write(err)
                             return;
                         });
                         audioFfmpeg.on('end', () => {
-                            console.log("Succesfully completed audio download!")
+                            write("Succesfully completed audio download!")
                         });
                     }
                 }
