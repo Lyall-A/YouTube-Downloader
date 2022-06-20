@@ -7,6 +7,7 @@ const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 const ffmpeg = require('fluent-ffmpeg');
 const prompts = require('prompts');
 const fetch = require('node-fetch');
+const request = require('request');
 let totalTime = 0;
 function write(text) {
     process.stdout.clearLine();
@@ -37,7 +38,7 @@ function getSupportedName(name) {
     return name.replaceAll("\\", "").replaceAll("/", "").replaceAll(":", "").replaceAll("*", "").replaceAll("?", "").replaceAll("\"", "").replaceAll("<", "").replaceAll(">", "").replaceAll("|", "");
 }
 
-async function downloadAudioFfmpeg(input, filename, download) {
+async function downloadAudioFfmpeg(input, filename, thumbnail, download) {
     let supportedFilename = getSupportedName(filename);
     if (!download) {
         if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.mp3`)) {
@@ -56,28 +57,79 @@ async function downloadAudioFfmpeg(input, filename, download) {
             return downloadAudioFfmpeg(input, filename, true)
         }
     } else {
-        write("Downloading audio")
-        let audioFfmpeg = ffmpeg(input)
-        if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
-        if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
-        audioFfmpeg.save(`${downloads}\\Audios\\${supportedFilename}.mp3`)
-        audioFfmpeg.on('codecData', (data) => {
-            totalTime = parseInt(data.duration.replace(/:/g, ''));
-        });
-        audioFfmpeg.on('progress', (prog) => {
-            if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
-            const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
-            return write(`${Math.round(Number(calculatedProg))}% Completed`)
-        });
-        audioFfmpeg.on('error', (err) => {
-            // if a error was found downloading audio
-            write("An FFmpeg Error Occurred, Sorry!")
-            if (debug) write(err)
-            return;
-        });
-        audioFfmpeg.on('end', () => {
-            write("Succesfully completed audio download!")
-        });
+        if (thumbnail) {
+            write("Downloading thumbnail")
+            request.head(thumbnail, (err) => {
+                if (err) return startAudioDownload();
+                let thumbPipe = request(thumbnail).pipe(fs.createWriteStream(`${downloads}\\Audios\\${supportedFilename}.png`));
+                thumbPipe.on('finish', () => {
+                    startAudioDownload(true)
+                });
+                thumbPipe.on('error', () => {
+                    startAudioDownload()
+                });
+            });
+        } else {
+            startAudioDownload()
+        }
+        function startAudioDownload(thumb) {
+            write("Downloading audio")
+            let audioFfmpeg = ffmpeg(input)
+            if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
+            if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
+            if (thumb) {
+                audioFfmpeg.addInput(`${downloads}\\Audios\\${supportedFilename}.png`)
+                audioFfmpeg.addOutputOptions(`-map`, `0:0`, `-map`, `1:0`, `-id3v2_version`, `3`)
+            }
+            audioFfmpeg.save(`${downloads}\\Audios\\${supportedFilename}.mp3`)
+            audioFfmpeg.on('codecData', (data) => {
+                totalTime = parseInt(data.duration.replace(/:/g, ''));
+            });
+            audioFfmpeg.on('progress', (prog) => {
+                if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                return write(`${Math.round(Number(calculatedProg))}% Completed`)
+            });
+            audioFfmpeg.on('error', (err) => {
+                if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.mp3`)) {
+                    unlink()
+                    function unlink() {
+                        fs.unlink(`${downloads}\\Audios\\${supportedFilename}.mp3`, (err) => {
+                            if (err) unlink()
+                        })
+                    }
+                }
+
+                if (!err.message.includes("Could not write header for output file")) {
+                    // if a error was found downloading audio
+                    write("An FFmpeg Error Occurred, Sorry!")
+                    if (debug) write(err)
+                    return;
+                } else {
+                    if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.png`)) {
+                        unlinkThumb()
+                        function unlinkThumb() {
+                            fs.unlink(`${downloads}\\Audios\\${supportedFilename}.png`, (err) => {
+                                if (err) unlinkThumb()
+                            })
+                        }
+                    }
+
+                    return startAudioDownload()
+                }
+            });
+            audioFfmpeg.on('end', () => {
+                if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.png`)) {
+                    unlinkThumb()
+                    function unlinkThumb() {
+                        fs.unlink(`${downloads}\\Audios\\${supportedFilename}.png`, (err) => {
+                            if (err) unlinkThumb()
+                        })
+                    }
+                }
+                write("Succesfully completed audio download!")
+            });
+        }
     }
 }
 
@@ -106,6 +158,14 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
         if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
         audioFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp3`)
         audioFfmpeg.on('error', (err) => {
+            if (fs.existsSync(`${downloads}\\Videos\\${supportedFilename}.mp3`)) {
+                unlink()
+                function unlink() {
+                    fs.unlink(`${downloads}\\Videos\\${supportedFilename}.mp3`, (err) => {
+                        if (err) unlink()
+                    })
+                }
+            }
             // if a error was found downloading audio
             write("An FFmpeg Error Occurred, Sorry!")
             if (debug) write(err)
@@ -128,6 +188,22 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFilename}.mp3`)
             videoFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp4`)
             videoFfmpeg.on('error', (err) => {
+                if (fs.existsSync(`${downloads}\\Videos\\${supportedFilename}.mp3`)) {
+                    unlink()
+                    function unlink() {
+                        fs.unlink(`${downloads}\\Videos\\${supportedFilename}.mp3`, (err) => {
+                            if (err) unlink()
+                        })
+                    }
+                }
+                if (fs.existsSync(`${downloads}\\Videos\\${supportedFilename}.mp4`)) {
+                    unlink()
+                    function unlink() {
+                        fs.unlink(`${downloads}\\Videos\\${supportedFilename}.mp4`, (err) => {
+                            if (err) unlink()
+                        })
+                    }
+                }
                 write("An FFmpeg Error Occurred, Sorry!")
                 if (debug) write(err)
                 return;
@@ -259,8 +335,6 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 let query = 0;
                 let foundAll = false;
                 let searchArray = [];
-                let idArray = [];
-                let rawSearchArray = [];
                 // adding search results
                 searched.forEach(each => {
                     query += 1;
@@ -268,18 +342,12 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                     if (each.title.length > 100) {
                         name = each.title.substring(0, 97) + "..."
                     } else name = each.title;
-                    rawSearchArray.push(name)
                     searchArray.push(chalk.blue(query + ". ") + chalk.green(name));
-                    idArray.push(each.id)
-                    if (query === searchLimit) {
+                    if (query === searched.length) {
                         foundAll = true;
                         searchContinue()
                     }
                 });
-                setTimeout(() => {
-                    // this is if it couldnt find the amount of results searched (or took to long)
-                    if (!foundAll) searchContinue()
-                }, 4000)
                 async function searchContinue() {
                     let vidNum;
                     if (searchLimit !== 1) {
@@ -335,12 +403,12 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         }
                     }
 
-                    let supportedFilename = getSupportedName(rawSearchArray[vidNum - 1]);
+                    let supportedFilename = getSupportedName(searched[vidNum - 1].title);
 
                     // if you chose mp4/video
-                    if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }), ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }), supportedFilename)
+                    if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }), supportedFilename)
                     // if you chose mp3/audio
-                    if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(idArray[vidNum - 1], { quality: 'highestaudio' }), supportedFilename)
+                    if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url)
                 }
                 return;
             }
@@ -401,7 +469,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 let supportedFilename = getSupportedName(searched.title);
 
                 if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched.id, { quality: 'highestaudio' }), ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
-                if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename);
+                if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename, searched.thumbnail.url);
                 return;
             }
         }
