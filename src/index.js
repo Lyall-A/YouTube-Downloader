@@ -13,6 +13,9 @@ function write(text) {
     process.stdout.cursorTo(0);
     return process.stdout.write(text);
 }
+function c() {
+    console.log("");
+}
 const { resolve } = require('path');
 const fs = require('fs');
 const { execFile } = require('child_process');
@@ -153,6 +156,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 execFile('git', ['--version'], (err) => {
                     if (err) {
                         write("An update was found, but cannot automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
+                        c()
                         start()
                     } else {
                         execFile('git', ['stash', 'save'], (err) => {
@@ -160,6 +164,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                                 if (err) {
                                     if (!debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
                                     if (debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
+                                    c()
                                     start()
                                 } else {
                                     write("Installed update, please restart!")
@@ -174,6 +179,10 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
         } else {
             start()
         }
+    }).catch(err => {
+        write("Could not check for update!")
+        c()
+        start()
     });
 
     async function start() {
@@ -182,8 +191,10 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
         if (debug === true) {
             let old = { mkdirSync: fs.mkdirSync }
             write(chalk.red("DEBUG MODE IS ENABLED"))
+            c()
             fs.mkdirSync = function (dir) {
                 write(`Creating directory ${dir}`)
+                c()
                 old.mkdirSync(dir);
             }
         }
