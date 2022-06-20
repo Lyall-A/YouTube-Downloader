@@ -1,7 +1,6 @@
 // setting up variables
 const ytdl = require('ytdl-core');
-const { search } = require('youtube-sr').default;
-const { getVideo } = require('youtube-sr').default;
+const { search, getVideo } = require('youtube-sr').default;
 const chalk = require('chalk');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffprobePath = require('@ffprobe-installer/ffprobe').path;
@@ -163,8 +162,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                                     if (debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
                                     start()
                                 } else {
-                                    write("Installed update!")
-                                    start()
+                                    write("Installed update, please restart!")
                                 }
                             });
                         })
