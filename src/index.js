@@ -333,83 +333,77 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 }
 
                 let query = 0;
-                let foundAll = false;
                 let searchArray = [];
                 // adding search results
-                searched.forEach(each => {
+                searched.forEach(async each => {
                     query += 1;
                     let name;
                     if (each.title.length > 100) {
                         name = each.title.substring(0, 97) + "..."
                     } else name = each.title;
-                    searchArray.push(chalk.blue(query + ". ") + chalk.green(name));
+                    searchArray.push({ title: chalk.blue(query + ". ") + chalk.green(name), value: `${query}` });
                     if (query === searched.length) {
-                        foundAll = true;
-                        searchContinue()
-                    }
-                });
-                async function searchContinue() {
-                    let vidNum;
-                    if (searchLimit !== 1) {
-                        write("\n" + searchArray.join('\n') + "\n")
-                        // ask what video you want to choose, 1 out of the specified limit
+                        let vidNum;
+                        if (searchLimit !== 1) {
+                            // ask what video you want to choose, 1 out of the specified limit
 
-                        const askVid = await prompts({
-                            type: 'number',
-                            name: 'vid',
-                            message: 'What one do you want?',
-                            validate: response => !response ? "You must enter the YouTube Video number shown above" : response > query ? "Unknown Video" : response < 1 ? "Cannot be under 1" : true
+                            const askVid = await prompts({
+                                type: 'select',
+                                name: 'vid',
+                                choices: searchArray,
+                                message: 'What one do you want?',
+                            });
+
+                            vidNum = askVid.vid;
+                        } else vidNum = 1;
+
+                        // ask the format, mp4, mp3 or both 
+                        let askFormat;
+                        if (format) askFormat = { format }
+                        if (!format) askFormat = await prompts({
+                            type: 'select',
+                            name: 'format',
+                            message: 'What Format do you want to download?',
+                            choices: [
+                                { title: 'Audio', value: 'mp3' },
+                                { title: 'Video', value: 'mp4' }
+                            ],
                         });
 
-                        vidNum = askVid.vid;
-                    } else vidNum = 1;
-
-                    // ask the format, mp4, mp3 or both 
-                    let askFormat;
-                    if (format) askFormat = { format }
-                    if (!format) askFormat = await prompts({
-                        type: 'select',
-                        name: 'format',
-                        message: 'What Format do you want to download?',
-                        choices: [
-                            { title: 'Audio', value: 'mp3' },
-                            { title: 'Video', value: 'mp4' }
-                        ],
-                    });
-
-                    if (askFormat.format !== "mp3") {
-                        // ask the quality
-                        let askQuality;
-                        if (quality) askQuality = { quality }
-                        if (!quality) {
-                            askQuality = await prompts({
-                                type: 'select',
-                                name: 'quality',
-                                message: 'What Quality do you want to download?',
-                                choices: [
-                                    { title: 'Default (1080p)', value: '1080' },
-                                    { title: '144p', value: '144' },
-                                    { title: '240p', value: '240' },
-                                    { title: '360p', value: '360' },
-                                    { title: '480p', value: '480' },
-                                    { title: '720p', value: '720' },
-                                    { title: '1080p (hd)', value: '1080' },
-                                    { title: '1440p (hd)', value: '1440' },
-                                    { title: '2160p (4k)', value: '2160' },
-                                    { title: '4320p (8k)', value: '4320' }
-                                ],
-                            });
-                            quality = askQuality.quality
+                        if (askFormat.format !== "mp3") {
+                            // ask the quality
+                            let askQuality;
+                            if (quality) askQuality = { quality }
+                            if (!quality) {
+                                askQuality = await prompts({
+                                    type: 'select',
+                                    name: 'quality',
+                                    message: 'What Quality do you want to download?',
+                                    choices: [
+                                        { title: 'Default (1080p)', value: '1080' },
+                                        { title: '144p', value: '144' },
+                                        { title: '240p', value: '240' },
+                                        { title: '360p', value: '360' },
+                                        { title: '480p', value: '480' },
+                                        { title: '720p', value: '720' },
+                                        { title: '1080p (hd)', value: '1080' },
+                                        { title: '1440p (hd)', value: '1440' },
+                                        { title: '2160p (4k)', value: '2160' },
+                                        { title: '4320p (8k)', value: '4320' }
+                                    ],
+                                });
+                                quality = askQuality.quality
+                            }
                         }
+
+                        let supportedFilename = getSupportedName(searched[vidNum - 1].title);
+
+                        // if you chose mp4/video
+                        if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }), supportedFilename)
+                        // if you chose mp3/audio
+                        if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url)
                     }
-
-                    let supportedFilename = getSupportedName(searched[vidNum - 1].title);
-
-                    // if you chose mp4/video
-                    if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(idArray[vidNum - 1], { quality: 'highestvideo' }), supportedFilename)
-                    // if you chose mp3/audio
-                    if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url)
-                }
+                });
                 return;
             }
             if (option === "link") {
