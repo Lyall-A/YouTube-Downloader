@@ -52,9 +52,9 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, download) {
             });
 
             if (askOverwrite.overwrite.toLowerCase() === "n") return;
-            return downloadAudioFfmpeg(input, filename, true)
+            return downloadAudioFfmpeg(input, filename, thumbnail, true)
         } else {
-            return downloadAudioFfmpeg(input, filename, true)
+            return downloadAudioFfmpeg(input, filename, thumbnail, true)
         }
     } else {
         if (thumbnail) {
