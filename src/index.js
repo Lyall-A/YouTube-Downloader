@@ -399,7 +399,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         let supportedFilename = getSupportedName(searched[vidNum - 1].title);
 
                         // if you chose mp4/video
-                        if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(searched[vidNum - 1], { quality: 'highestvideo' }), supportedFilename)
+                        if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
                         // if you chose mp3/audio
                         if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url)
                     }
