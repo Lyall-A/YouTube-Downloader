@@ -30,7 +30,7 @@ let volume = null;
 let framerate = null;
 let videoBitrate = null;
 let debug = false; // change this to true if you wnat debug mode, deleting that file also enables this
-const presets = require(`${resolve(__dirname, '..')}\\presets.json`);
+const presets = require(`${__dirname}\\presets.json`);
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
@@ -38,7 +38,7 @@ function getSupportedName(name) {
     return name.replaceAll("\\", "").replaceAll("/", "").replaceAll(":", "").replaceAll("*", "").replaceAll("?", "").replaceAll("\"", "").replaceAll("<", "").replaceAll(">", "").replaceAll("|", "");
 }
 
-async function downloadAudioFfmpeg(input, filename, thumbnail, download) {
+async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
     let supportedFilename = getSupportedName(filename);
     if (!download) {
         if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.mp3`)) {
@@ -52,29 +52,32 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, download) {
             });
 
             if (askOverwrite.overwrite.toLowerCase() === "n") return;
-            return downloadAudioFfmpeg(input, filename, thumbnail, true)
+            return downloadAudioFfmpeg(input, filename, thumbnail, id, true)
         } else {
-            return downloadAudioFfmpeg(input, filename, thumbnail, true)
+            return downloadAudioFfmpeg(input, filename, thumbnail, id, true)
         }
     } else {
         if (thumbnail) {
             write("Downloading thumbnail")
             request.head(thumbnail, (err) => {
-                if (err) return startAudioDownload();
+                if (err) return startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }));
                 let thumbPipe = request(thumbnail).pipe(fs.createWriteStream(`${downloads}\\Audios\\${supportedFilename}.png`));
                 thumbPipe.on('finish', () => {
                     startAudioDownload(true)
                 });
                 thumbPipe.on('error', () => {
-                    startAudioDownload()
+                    startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }))
                 });
             });
         } else {
-            startAudioDownload()
+            startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }))
         }
-        function startAudioDownload(thumb) {
+        function startAudioDownload(thumb, newInput) {
             write("Downloading audio")
-            let audioFfmpeg = ffmpeg(input)
+            let usedInput = input;
+            if (newInput) usedInput = newInput;
+
+            let audioFfmpeg = ffmpeg(usedInput)
             if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
             if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
             if (thumb) {
@@ -102,8 +105,8 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, download) {
 
                 if (!err.message.includes("Could not write header for output file")) {
                     // if a error was found downloading audio
-                    write("An FFmpeg Error Occurred, Sorry!")
-                    if (debug) write(err)
+                    write("An error occurred, Sorry!")
+                    if (debug) write(err.message)
                     return;
                 } else {
                     if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.png`)) {
@@ -115,7 +118,7 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, download) {
                         }
                     }
 
-                    return startAudioDownload()
+                    return startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }))
                 }
             });
             audioFfmpeg.on('end', () => {
@@ -167,8 +170,8 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 }
             }
             // if a error was found downloading audio
-            write("An FFmpeg Error Occurred, Sorry!")
-            if (debug) write(err)
+            write("An error occurred, Sorry!")
+            if (debug) write(err.message)
             return;
         });
         audioFfmpeg.on('end', () => {
@@ -204,8 +207,8 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         })
                     }
                 }
-                write("An FFmpeg Error Occurred, Sorry!")
-                if (debug) write(err)
+                write("An error occurred, Sorry!")
+                if (debug) write(err.message)
                 return;
             })
             videoFfmpeg.on('end', () => {
@@ -365,8 +368,8 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                             name: 'format',
                             message: 'What Format do you want to download?',
                             choices: [
-                                { title: 'Audio', value: 'mp3' },
-                                { title: 'Video', value: 'mp4' }
+                                { title: 'Video', value: 'mp4' },
+                                { title: 'Audio', value: 'mp3' }
                             ],
                         });
 
@@ -401,7 +404,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         // if you chose mp4/video
                         if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
                         // if you chose mp3/audio
-                        if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url)
+                        if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url, searched[vidNum - 1].id)
                     }
                 });
                 return;
@@ -421,8 +424,8 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                     name: 'format',
                     message: 'What Format do you want to download?',
                     choices: [
-                        { title: 'Audio', value: 'mp3' },
-                        { title: 'Video', value: 'mp4' }
+                        { title: 'Video', value: 'mp4' },
+                        { title: 'Audio', value: 'mp3' }
                     ],
                 });
 
@@ -463,7 +466,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 let supportedFilename = getSupportedName(searched.title);
 
                 if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched.id, { quality: 'highestaudio' }), ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
-                if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename, searched.thumbnail.url);
+                if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename, searched.thumbnail.url, searched.id);
                 return;
             }
         }
