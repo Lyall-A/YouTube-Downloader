@@ -57,8 +57,8 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
             return downloadAudioFfmpeg(input, filename, thumbnail, id, true)
         }
     } else {
+        write("Getting ready to start downloading...")
         if (thumbnail) {
-            write("Downloading thumbnail")
             request.head(thumbnail, (err) => {
                 if (err) return startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }));
                 let thumbPipe = request(thumbnail).pipe(fs.createWriteStream(`${downloads}\\Audios\\${supportedFilename}.png`));
@@ -73,7 +73,6 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
             startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }))
         }
         function startAudioDownload(thumb, newInput) {
-            write("Downloading audio")
             let usedInput = input;
             if (newInput) usedInput = newInput;
 
@@ -101,7 +100,7 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                             if (err) unlink()
                         })
                     }
-                }
+                }F
 
                 if (!err.message.includes("Could not write header for output file")) {
                     // if a error was found downloading audio
@@ -130,7 +129,7 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                         })
                     }
                 }
-                write("Succesfully completed audio download!")
+                write("Succesfully completed download!")
             });
         }
     }
@@ -155,7 +154,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             return downloadVideoFfmpeg(audioInput, videoInput, filename, true)
         }
     } else {
-        write("Downloading audio")
+        write("Getting ready to start downloading...")
         let audioFfmpeg = ffmpeg(audioInput)
         if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
         if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
@@ -175,7 +174,6 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             return;
         });
         audioFfmpeg.on('end', () => {
-            write("Downloading video")
             let videoFfmpeg = ffmpeg(videoInput)
             videoFfmpeg.on('codecData', (data) => {
                 totalTime = parseInt(data.duration.replace(/:/g, ''));
@@ -218,7 +216,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         if (err) unlink()
                     });
                 }
-                return write("Succesfully completed video download!")
+                return write("Succesfully completed download!")
             });
         });
     }
