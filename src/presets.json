@@ -2,6 +2,7 @@
     {
         "name": "Bad Quality",
         "config": {
+            "metadata": false,
             "videos": null,
             "quality": 100,
             "videoBitrate": "100k",
@@ -10,6 +11,20 @@
             "format": null,
             "overwrite": false,
             "volume": "1"
+        }
+    },
+    {
+        "name": "No Metadata",
+        "config": {
+            "metadata": false,
+            "videos": null,
+            "quality": null,
+            "videoBitrate": null,
+            "audioBitrate": null,
+            "framerate": null,
+            "format": null,
+            "overwrite": false,
+            "volume": null
         }
     }
 ]
