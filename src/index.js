@@ -106,7 +106,7 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                             if (err) unlink()
                         })
                     }
-                } F
+                }
 
                 if (!err.message.includes("Could not write header for output file")) {
                     // if a error was found downloading audio
