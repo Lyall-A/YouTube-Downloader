@@ -21,6 +21,7 @@ const { resolve } = require('path');
 const fs = require('fs');
 const { execFile } = require('child_process');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
+let metadata = true;
 let searchLimit = 10; // change this if you want to search for more or less results
 let quality = null;
 let overwrite = false;
@@ -59,16 +60,20 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
     } else {
         write("Getting ready to start downloading...")
         if (thumbnail) {
-            request.head(thumbnail, (err) => {
-                if (err) return startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }));
-                let thumbPipe = request(thumbnail).pipe(fs.createWriteStream(`${downloads}\\Audios\\${supportedFilename}.png`));
-                thumbPipe.on('finish', () => {
-                    startAudioDownload(true)
+            if (metadata) {
+                request.head(thumbnail, (err) => {
+                    if (err) return startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }));
+                    let thumbPipe = request(thumbnail).pipe(fs.createWriteStream(`${downloads}\\Audios\\${supportedFilename}.png`));
+                    thumbPipe.on('finish', () => {
+                        startAudioDownload(true)
+                    });
+                    thumbPipe.on('error', () => {
+                        startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }))
+                    });
                 });
-                thumbPipe.on('error', () => {
-                    startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }))
-                });
-            });
+            } else {
+                startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }))
+            }
         } else {
             startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }))
         }
@@ -83,6 +88,7 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                 audioFfmpeg.addInput(`${downloads}\\Audios\\${supportedFilename}.png`)
                 audioFfmpeg.addOutputOptions(`-map`, `0:0`, `-map`, `1:0`, `-id3v2_version`, `3`)
             }
+            if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
             audioFfmpeg.save(`${downloads}\\Audios\\${supportedFilename}.mp3`)
             audioFfmpeg.on('codecData', (data) => {
                 totalTime = parseInt(data.duration.replace(/:/g, ''));
@@ -100,7 +106,7 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                             if (err) unlink()
                         })
                     }
-                }F
+                } F
 
                 if (!err.message.includes("Could not write header for output file")) {
                     // if a error was found downloading audio
@@ -158,6 +164,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
         let audioFfmpeg = ffmpeg(audioInput)
         if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
         if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
+        if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
         audioFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp3`)
         audioFfmpeg.on('error', (err) => {
             if (fs.existsSync(`${downloads}\\Videos\\${supportedFilename}.mp3`)) {
@@ -186,6 +193,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             if (quality) videoFfmpeg.size(`?x${quality}`)
             if (framerate) videoFfmpeg.fps(framerate)
             if (videoBitrate) videoFfmpeg.videoBitrate(videoBitrate);
+            if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
             videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFilename}.mp3`)
             videoFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp4`)
             videoFfmpeg.on('error', (err) => {
@@ -298,14 +306,15 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                     if (askPreset.preset !== "none") {
                         let presetOption = presets[preset].config
 
-                        if (presetOption.videos) searchLimit = presetOption.videos
-                        if (presetOption.quality) quality = presetOption.quality
-                        if (presetOption.overwrite) overwrite = presetOption.overwrite
-                        if (presetOption.format) format = presetOption.format
-                        if (presetOption.videoBitrate) videoBitrate = presetOption.videoBitrate
-                        if (presetOption.audioBitrate) audioBitrate = presetOption.audioBitrate
-                        if (presetOption.framerate) framerate = presetOption.framerate
-                        if (presetOption.volume) fovolumermat = presetOption.volume
+                        if (presetOption.metadata !== null) metadata = presetOption.metadata
+                        if (presetOption.videos !== null) searchLimit = presetOption.videos
+                        if (presetOption.quality !== null) quality = presetOption.quality
+                        if (presetOption.overwrite !== null) overwrite = presetOption.overwrite
+                        if (presetOption.format !== null) format = presetOption.format
+                        if (presetOption.videoBitrate !== null) videoBitrate = presetOption.videoBitrate
+                        if (presetOption.audioBitrate !== null) audioBitrate = presetOption.audioBitrate
+                        if (presetOption.framerate !== null) framerate = presetOption.framerate
+                        if (presetOption.volume !== null) fovolumermat = presetOption.volume
                     }
                 }
             };
