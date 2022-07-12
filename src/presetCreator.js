@@ -1,7 +1,7 @@
 const prompts = require('prompts');
 const { resolve } = require('path');
 const { writeFile } = require('fs');
-const presets = require(`${resolve(__dirname, '..')}\\presets.json`);
+const presets = require(`${__dirname}\\presets.json`);
 
 (async () => {
     const askName = await prompts({
@@ -15,6 +15,12 @@ const presets = require(`${resolve(__dirname, '..')}\\presets.json`);
         if (askName.name.toLowerCase() === presets[preset].name.toLowerCase()) {
             return console.log("Name already exists")
         }
+
+        const askMetadata = await prompts({
+            type: 'toggle',
+            name: 'response',
+            message: 'Add metadata, like thumbnails, title, etc'
+        });
 
         const askVideos = await prompts({
             type: 'number',
@@ -74,18 +80,20 @@ const presets = require(`${resolve(__dirname, '..')}\\presets.json`);
             }
         }
 
+        if (!askMetadata.response) askMetadata.response = false;
         if (!askVideos.response) askVideos.response = null
         if (!askQuality.response) askQuality.response = null
         if (!askVideoBitrate.response) askVideoBitrate.response = null
         if (!askAudioBitrate.response) askAudioBitrate.response = null
         if (!askFramerate.response) askFramerate.response = null
         if (!askFormat.response) askFormat.response = null
-        if (!askOverwrite.response) askOverwrite.response = null
+        if (!askOverwrite.response) askOverwrite.response = false
         if (!askVolume.response) askVolume.response = null
 
         presets.push({
             name: askName.name,
             config: {
+                metadata: askMetadata.response,
                 videos: askVideos.response,
                 quality: askQuality.response,
                 videoBitrate: askVideoBitrate.response,
@@ -97,7 +105,7 @@ const presets = require(`${resolve(__dirname, '..')}\\presets.json`);
             }
         });
 
-        writeFile(`${resolve(__dirname, '..')}\\presets.json`, JSON.stringify(presets, null, 4), (err) => {
+        writeFile(`${__dirname}\\presets.json`, JSON.stringify(presets, null, 4), (err) => {
             if (err) return console.log("Failed to create preset, sorry!")
             console.log("Succesfully created Preset")
         });
