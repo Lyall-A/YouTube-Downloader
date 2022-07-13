@@ -46,6 +46,18 @@ const presets = require(`${__dirname}\\presets.json`);
             message: 'Audio Bitrate, example: 192'
         });
 
+        const askBass = await prompts({
+            type: 'number',
+            name: 'response',
+            message: 'Bass Amount, example: 10'
+        });
+
+        const askTreble = await prompts({
+            type: 'number',
+            name: 'response',
+            message: 'Treble Amount, example: 5'
+        });
+
         const askFramerate = await prompts({
             type: 'number',
             name: 'response',
@@ -84,7 +96,8 @@ const presets = require(`${__dirname}\\presets.json`);
         if (!askVideos.response) askVideos.response = null
         if (!askQuality.response) askQuality.response = null
         if (!askVideoBitrate.response) askVideoBitrate.response = null
-        if (!askAudioBitrate.response) askAudioBitrate.response = null
+        if (!askBass.response) askBass.response = null
+        if (!askTreble.response) askTreble.response = null
         if (!askFramerate.response) askFramerate.response = null
         if (!askFormat.response) askFormat.response = null
         if (!askOverwrite.response) askOverwrite.response = false

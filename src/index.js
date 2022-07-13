@@ -26,6 +26,8 @@ let searchLimit = 10; // change this if you want to search for more or less resu
 let quality = null;
 let overwrite = false;
 let format = null;
+let bass = null;
+let treble = null;
 let audioBitrate = null;
 let volume = null;
 let framerate = null;
@@ -84,6 +86,17 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
             let audioFfmpeg = ffmpeg(usedInput)
             if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
             if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
+            if (bass) {
+                if (treble) {
+                    audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass},treble=g=${treble}`)
+                } else {
+                    audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass}`)
+                }
+            } else {
+                if (treble) {
+                    audioFfmpeg.addOutputOptions(`-af`, `treble=g=${treble}`)
+                }
+            }
             if (thumb) {
                 audioFfmpeg.addInput(`${downloads}\\Audios\\${supportedFilename}.png`)
                 audioFfmpeg.addOutputOptions(`-map`, `0:0`, `-map`, `1:0`, `-id3v2_version`, `3`)
@@ -193,6 +206,17 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             if (quality) videoFfmpeg.size(`?x${quality}`)
             if (framerate) videoFfmpeg.fps(framerate)
             if (videoBitrate) videoFfmpeg.videoBitrate(videoBitrate);
+            if (bass) {
+                if (treble) {
+                    audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass},treble=g=${treble}`)
+                } else {
+                    audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass}`)
+                }
+            } else {
+                if (treble) {
+                    audioFfmpeg.addOutputOptions(`-af`, `treble=g=${treble}`)
+                }
+            }
             if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
             videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFilename}.mp3`)
             videoFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp4`)
@@ -313,6 +337,8 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         if (presetOption.format !== null) format = presetOption.format
                         if (presetOption.videoBitrate !== null) videoBitrate = presetOption.videoBitrate
                         if (presetOption.audioBitrate !== null) audioBitrate = presetOption.audioBitrate
+                        if (presetOption.bass !== null) bass = presetOption.bass
+                        if (presetOption.treble !== null) treble = presetOption.treble
                         if (presetOption.framerate !== null) framerate = presetOption.framerate
                         if (presetOption.volume !== null) fovolumermat = presetOption.volume
                     }

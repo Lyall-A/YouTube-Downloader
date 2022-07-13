@@ -2,28 +2,48 @@
     {
         "name": "Bad Quality",
         "config": {
-            "metadata": false,
+            "metadata": null,
             "videos": null,
             "quality": 100,
             "videoBitrate": "100k",
             "audioBitrate": "8k",
+            "bass": null,
+            "treble": null,
             "framerate": 20,
             "format": null,
-            "overwrite": false,
+            "overwrite": null,
             "volume": "1"
         }
     },
     {
         "name": "No Metadata",
         "config": {
-            "metadata": false,
+            "metadata": null,
             "videos": null,
             "quality": null,
             "videoBitrate": null,
             "audioBitrate": null,
+            "bass": null,
+            "treble": null,
             "framerate": null,
             "format": null,
-            "overwrite": false,
+            "overwrite": null,
+            "volume": null
+        }
+    },
+    {
+        "name": "Bass Boost",
+        "config": {
+            "metadata": null,
+            "videos": null,
+            "quality": null,
+            "videoBitrate": null,
+            "audioBitrate": null,
+            "bass": 15,
+            "treble": null,
+            "framerate": null,
+            "format": null,
+            "overwrite": null,
             "volume": null
         }
     }
