@@ -177,6 +177,17 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
         let audioFfmpeg = ffmpeg(audioInput)
         if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
         if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
+        if (bass) {
+            if (treble) {
+                audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass},treble=g=${treble}`)
+            } else {
+                audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass}`)
+            }
+        } else {
+            if (treble) {
+                audioFfmpeg.addOutputOptions(`-af`, `treble=g=${treble}`)
+            }
+        }
         if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
         audioFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp3`)
         audioFfmpeg.on('error', (err) => {
@@ -206,17 +217,6 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             if (quality) videoFfmpeg.size(`?x${quality}`)
             if (framerate) videoFfmpeg.fps(framerate)
             if (videoBitrate) videoFfmpeg.videoBitrate(videoBitrate);
-            if (bass) {
-                if (treble) {
-                    audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass},treble=g=${treble}`)
-                } else {
-                    audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass}`)
-                }
-            } else {
-                if (treble) {
-                    audioFfmpeg.addOutputOptions(`-af`, `treble=g=${treble}`)
-                }
-            }
             if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
             videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFilename}.mp3`)
             videoFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp4`)
