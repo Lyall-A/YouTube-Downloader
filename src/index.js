@@ -229,7 +229,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             if (videoBitrate) videoFfmpeg.videoBitrate(videoBitrate);
             if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
             videoFfmpeg.addInput(`${usedFilename}.mp3`)
-            videoFfmpeg.save(`${usedFilename}`)
+            videoFfmpeg.save(`${usedFilename}.mp4`)
             videoFfmpeg.on('error', (err) => {
                 if (fs.existsSync(`${usedFilename}.mp3`)) {
                     unlink()
