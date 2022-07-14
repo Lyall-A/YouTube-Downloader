@@ -21,6 +21,8 @@ const { resolve } = require('path');
 const fs = require('fs');
 const { execFile } = require('child_process');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
+let usingPreset = false;
+let presetName = true;
 let metadata = true;
 let searchLimit = 10; // change this if you want to search for more or less results
 let quality = null;
@@ -43,8 +45,12 @@ function getSupportedName(name) {
 
 async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
     let supportedFilename = getSupportedName(filename);
+    let usedFilename = `${downloads}\\Audios\\${supportedFilename}`;
+    if (presetName) {
+        if (usingPreset) usedFilename = `${downloads}\\Audios\\${supportedFilename} (${usingPreset})`;
+    }
     if (!download) {
-        if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.mp3`)) {
+        if (fs.existsSync(`${usedFilename}.mp3`)) {
             let askOverwrite;
             if (overwrite) askOverwrite = { overwrite: "y" }
             if (!overwrite) askOverwrite = await prompts({
@@ -65,7 +71,7 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
             if (metadata) {
                 request.head(thumbnail, (err) => {
                     if (err) return startAudioDownload(false, ytdl(id, { quality: 'highestaudio' }));
-                    let thumbPipe = request(thumbnail).pipe(fs.createWriteStream(`${downloads}\\Audios\\${supportedFilename}.png`));
+                    let thumbPipe = request(thumbnail).pipe(fs.createWriteStream(`${usedFilename}.png`));
                     thumbPipe.on('finish', () => {
                         startAudioDownload(true)
                     });
@@ -98,11 +104,11 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                 }
             }
             if (thumb) {
-                audioFfmpeg.addInput(`${downloads}\\Audios\\${supportedFilename}.png`)
+                audioFfmpeg.addInput(`${usedFilename}.png`)
                 audioFfmpeg.addOutputOptions(`-map`, `0:0`, `-map`, `1:0`, `-id3v2_version`, `3`)
             }
             if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
-            audioFfmpeg.save(`${downloads}\\Audios\\${supportedFilename}.mp3`)
+            audioFfmpeg.save(`${usedFilename}.mp3`)
             audioFfmpeg.on('codecData', (data) => {
                 totalTime = parseInt(data.duration.replace(/:/g, ''));
             });
@@ -112,10 +118,10 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                 return write(`${Math.round(Number(calculatedProg))}% Completed`)
             });
             audioFfmpeg.on('error', (err) => {
-                if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.mp3`)) {
+                if (fs.existsSync(`${usedFilename}.mp3`)) {
                     unlink()
                     function unlink() {
-                        fs.unlink(`${downloads}\\Audios\\${supportedFilename}.mp3`, (err) => {
+                        fs.unlink(`${usedFilename}.mp3`, (err) => {
                             if (err) unlink()
                         })
                     }
@@ -127,10 +133,10 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                     if (debug) write(err.message)
                     return;
                 } else {
-                    if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.png`)) {
+                    if (fs.existsSync(`${usedFilename}.png`)) {
                         unlinkThumb()
                         function unlinkThumb() {
-                            fs.unlink(`${downloads}\\Audios\\${supportedFilename}.png`, (err) => {
+                            fs.unlink(`${usedFilename}.png`, (err) => {
                                 if (err) unlinkThumb()
                             })
                         }
@@ -140,10 +146,10 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                 }
             });
             audioFfmpeg.on('end', () => {
-                if (fs.existsSync(`${downloads}\\Audios\\${supportedFilename}.png`)) {
+                if (fs.existsSync(`${usedFilename}.png`)) {
                     unlinkThumb()
                     function unlinkThumb() {
-                        fs.unlink(`${downloads}\\Audios\\${supportedFilename}.png`, (err) => {
+                        fs.unlink(`${usedFilename}.png`, (err) => {
                             if (err) unlinkThumb()
                         })
                     }
@@ -156,8 +162,12 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
 
 async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
     let supportedFilename = getSupportedName(filename);
+    let usedFilename = `${downloads}\\Videos\\${supportedFilename}`;
+    if (presetName) {
+        if (usingPreset) usedFilename = `${downloads}\\Videos\\${supportedFilename} (${usingPreset})`;
+    }
     if (!download) {
-        if (fs.existsSync(`${downloads}\\Videos\\${supportedFilename}.mp4`)) {
+        if (fs.existsSync(`${usedFilename}.mp4`)) {
             let askOverwrite;
             if (overwrite) askOverwrite = { overwrite: "y" }
             if (!overwrite) askOverwrite = await prompts({
@@ -189,12 +199,12 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             }
         }
         if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
-        audioFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp3`)
+        audioFfmpeg.save(`${usedFilename}.mp3`)
         audioFfmpeg.on('error', (err) => {
-            if (fs.existsSync(`${downloads}\\Videos\\${supportedFilename}.mp3`)) {
+            if (fs.existsSync(`${usedFilename}.mp3`)) {
                 unlink()
                 function unlink() {
-                    fs.unlink(`${downloads}\\Videos\\${supportedFilename}.mp3`, (err) => {
+                    fs.unlink(`${usedFilename}.mp3`, (err) => {
                         if (err) unlink()
                     })
                 }
@@ -218,21 +228,21 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             if (framerate) videoFfmpeg.fps(framerate)
             if (videoBitrate) videoFfmpeg.videoBitrate(videoBitrate);
             if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
-            videoFfmpeg.addInput(`${downloads}\\Videos\\${supportedFilename}.mp3`)
-            videoFfmpeg.save(`${downloads}\\Videos\\${supportedFilename}.mp4`)
+            videoFfmpeg.addInput(`${usedFilename}.mp3`)
+            videoFfmpeg.save(`${usedFilename}`)
             videoFfmpeg.on('error', (err) => {
-                if (fs.existsSync(`${downloads}\\Videos\\${supportedFilename}.mp3`)) {
+                if (fs.existsSync(`${usedFilename}.mp3`)) {
                     unlink()
                     function unlink() {
-                        fs.unlink(`${downloads}\\Videos\\${supportedFilename}.mp3`, (err) => {
+                        fs.unlink(`${usedFilename}.mp3`, (err) => {
                             if (err) unlink()
                         })
                     }
                 }
-                if (fs.existsSync(`${downloads}\\Videos\\${supportedFilename}.mp4`)) {
+                if (fs.existsSync(`${usedFilename}.mp4`)) {
                     unlink()
                     function unlink() {
-                        fs.unlink(`${downloads}\\Videos\\${supportedFilename}.mp4`, (err) => {
+                        fs.unlink(`${usedFilename}.mp4`, (err) => {
                             if (err) unlink()
                         })
                     }
@@ -244,7 +254,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             videoFfmpeg.on('end', () => {
                 unlink()
                 function unlink() {
-                    fs.unlink(`${downloads}\\Videos\\${supportedFilename}.mp3`, (err) => {
+                    fs.unlink(`${usedFilename}.mp3`, (err) => {
                         if (err) unlink()
                     });
                 }
@@ -328,6 +338,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                     });
 
                     if (askPreset.preset !== "none") {
+                        usingPreset = presets[preset].name;
                         let presetOption = presets[preset].config
 
                         if (presetOption.metadata !== null) metadata = presetOption.metadata
