@@ -22,19 +22,7 @@ const fs = require('fs');
 const { execFile } = require('child_process');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
 let usingPreset = false;
-let presetName = true;
-let metadata = true;
-let searchLimit = 10; // change this if you want to search for more or less results
-let quality = null;
-let overwrite = false;
-let format = null;
-let bass = null;
-let treble = null;
-let audioBitrate = null;
-let volume = null;
-let framerate = null;
-let videoBitrate = null;
-let debug = false; // change this to true if you wnat debug mode, deleting that file also enables this
+let { presetName, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(`${__dirname}\\config.json`);
 const presets = require(`${__dirname}\\presets.json`);
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
@@ -265,13 +253,9 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
 }
 
 (async () => {
-
-    // check if the file exists, if not then debug mode will be enabled
-    if (!fs.existsSync(resolve(__dirname, '..') + "\\Delete this if you know what your doing")) debug = true;
-
     await fetch('https://raw.githubusercontent.com/lyall-pc/YouTube-Downloader/main/package.json').then(res => res.json()).then(package => {
         if (package.version !== require(`${resolve(__dirname, '..')}\\package.json`).version) {
-            if (!fs.existsSync(`${resolve(__dirname, '..')}\\dev`)) {
+            if (!fs.existsSync(`${resolve(__dirname, '..')}\\no_update`)) {
                 execFile('git', ['--version'], (err) => {
                     if (err) {
                         write("An update was found, but cannot automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
@@ -459,6 +443,11 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                     if (!link.split("/")[2].endsWith("youtube.com")) {
                         return write("Invalid URL")
                     }
+                }
+                if (!link.includes("/shorts/")) {
+                    link = link.split("&")[0];
+                } else {
+                    link = link.split("?")[0];
                 }
 
                 let askFormat;
