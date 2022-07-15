@@ -338,8 +338,8 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                     });
 
                     if (askPreset.preset !== "none") {
-                        usingPreset = presets[preset].name;
-                        let presetOption = presets[preset].config
+                        usingPreset = presets[askPreset.preset].name;
+                        let presetOption = presets[askPreset.preset].config
 
                         if (presetOption.metadata !== null) metadata = presetOption.metadata
                         if (presetOption.videos !== null) searchLimit = presetOption.videos
