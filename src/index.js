@@ -19,11 +19,15 @@ function c() {
 }
 const { resolve } = require('path');
 const fs = require('fs');
+let presetLoc = `${__dirname}\\presets.json`;
+let configLoc = `${__dirname}\\config.json`;
+if (!fs.existsSync(`${__dirname}\\presets.json`)) presetLoc = `${__dirname}\\default.presets.json`;
+if (!fs.existsSync(`${__dirname}\\config.json`)) configLoc = `${__dirname}\\default.config.json`;
 const { execFile } = require('child_process');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
 let usingPreset = false;
-let { presetName, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(`${__dirname}\\config.json`);
-const presets = require(`${__dirname}\\presets.json`);
+let { presetName, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
+const presets = require(presetLoc);
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
@@ -292,7 +296,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
 
         // if debug mode is on it runs this
         if (debug === true) {
-            let old = { mkdirSync: fs.mkdirSync }
+            let old = { mkdirSync: fs.mkdirSync, writeFileSync: fs.writeFileSync }
             write(chalk.red("DEBUG MODE IS ENABLED"))
             c()
             fs.mkdirSync = function (dir) {
@@ -300,12 +304,19 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 c()
                 old.mkdirSync(dir);
             }
+            fs.writeFileSync = function (file, data) {
+                write(`Creating file ${file}`)
+                c()
+                old.writeFileSync(file, data);
+            }
         }
 
         // checks if download folders exist, if not then it automatically creates them
         if (!fs.existsSync(downloads)) fs.mkdirSync(downloads);
         if (!fs.existsSync(`${downloads}\\Videos`)) fs.mkdirSync(`${downloads}\\Videos`);
         if (!fs.existsSync(`${downloads}\\Audios`)) fs.mkdirSync(`${downloads}\\Audios`);
+        if (!fs.existsSync(`${__dirname}\\presets.json`)) fs.writeFileSync(`${__dirname}\\presets.json`, JSON.stringify(defaultPresets, null, 4));
+        if (!fs.existsSync(`${__dirname}\\config.json`)) fs.writeFileSync(`${__dirname}\\config.json`, JSON.stringify(defaultConfig, null, 4));
 
         if (Object.keys(presets).length !== 0) {
             let presetsFound = 0;
