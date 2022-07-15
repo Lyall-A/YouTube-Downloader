@@ -19,6 +19,8 @@ function c() {
 }
 const { resolve } = require('path');
 const fs = require('fs');
+const defaultPresets = require(`${__dirname}\\default.presets.json`);
+const defaultConfig = require(`${__dirname}\\default.config.json`);
 let presetLoc = `${__dirname}\\presets.json`;
 let configLoc = `${__dirname}\\config.json`;
 if (!fs.existsSync(`${__dirname}\\presets.json`)) presetLoc = `${__dirname}\\default.presets.json`;
