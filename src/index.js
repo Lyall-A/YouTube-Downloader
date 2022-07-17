@@ -401,6 +401,10 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                             vidNum = askVid.vid;
                         } else vidNum = 1;
 
+                        if (searched[vidNum - 1].live) return write("This content is live, cannot download!")
+                        const searchedId = await getVideo(`https://youtu.be/${searched[vidNum - 1].id}`).catch(() => {});
+                        if (searchedId.live) return write("This content is live, cannot download!")
+
                         // ask the format, mp4, mp3 or both 
                         let askFormat;
                         if (format) askFormat = { format }
@@ -463,6 +467,15 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                     link = link.split("?")[0];
                 }
 
+                const searched = await getVideo(link).catch(err => {
+                    // if it failed to get video, log
+                    return write("Failed to find video")
+                });
+
+                if (!searched) return; // this just stops the code below from running if no video was found
+
+                if (searched.live) return write("This content is live, cannot download!")
+
                 let askFormat;
                 if (format) askFormat = { format }
                 if (!format) askFormat = await prompts({
@@ -474,13 +487,6 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         { title: 'Audio', value: 'mp3' }
                     ],
                 });
-
-                const searched = await getVideo(link).catch(err => {
-                    // if it failed to get video, log
-                    return write("Failed to find video")
-                });
-
-                if (!searched) return; // this just stops the code below from running if no video was found
 
                 if (askFormat.format !== "mp3") {
                     // ask the quality
