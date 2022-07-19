@@ -42,7 +42,7 @@ async function downloadAudioFfmpeg(liveContent, input, filename, thumbnail, id, 
     let supportedFilename = getSupportedName(filename);
     let usedFilename = `${downloads}\\Audios\\${supportedFilename}`;
     if (presetName) {
-        if (usingPreset) usedFilename = `${downloads}\\Audios\\${supportedFilename} (${usingPreset})`;
+        if (usingPreset) usedFilename = `${downloads}\\Audios\\${supportedFilename} (${getSupportedName(usingPreset)})`;
     }
     if (!download) {
         if (fs.existsSync(`${usedFilename}.mp3`)) {
@@ -163,7 +163,7 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
     let supportedFilename = getSupportedName(filename);
     let usedFilename = `${downloads}\\Videos\\${supportedFilename}`;
     if (presetName) {
-        if (usingPreset) usedFilename = `${downloads}\\Videos\\${supportedFilename} (${usingPreset})`;
+        if (usingPreset) usedFilename = `${downloads}\\Videos\\${supportedFilename} (${getSupportedName(usingPreset)})`;
     }
     if (!download) {
         if (fs.existsSync(`${usedFilename}.mp4`)) {
