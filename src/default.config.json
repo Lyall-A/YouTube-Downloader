@@ -1,5 +1,6 @@
 {
     "presetName": true,
+    "forcemp4": false,
     "metadata": true,
     "searchLimit": 10,
     "quality": null,
