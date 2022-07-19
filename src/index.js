@@ -28,7 +28,7 @@ if (!fs.existsSync(`${__dirname}\\config.json`)) configLoc = `${__dirname}\\defa
 const { execFile } = require('child_process');
 const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
 let usingPreset = false;
-let { presetName, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
+let { presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
 const presets = require(presetLoc);
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
@@ -222,7 +222,7 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
         }
         function onEndDownload() {
             let fileFormat = "mp4";
-            if (liveContent) fileFormat = "flv";
+            if (!forcemp4) if (liveContent) fileFormat = "flv";
             let videoFfmpeg = ffmpeg(videoInput)
             videoFfmpeg.on('codecData', (data) => {
                 totalTime = parseInt(data.duration.replace(/:/g, ''));
@@ -240,8 +240,24 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
             if (framerate) videoFfmpeg.fps(framerate)
             if (videoBitrate) videoFfmpeg.videoBitrate(videoBitrate);
             if (!liveContent) videoFfmpeg.addInput(`${usedFilename}.mp3`);
-            if (liveContent) videoFfmpeg.videoCodec("flv");
+            if (liveContent) {
+                videoFfmpeg.videoCodec("flv");
+                if (audioBitrate) videoFfmpeg.audioBitrate(audioBitrate)
+                if (volume) videoFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
+                if (bass) {
+                    if (treble) {
+                        videoFfmpeg.addOutputOptions(`-af`, `bass=g=${bass},treble=g=${treble}`)
+                    } else {
+                        videoFfmpeg.addOutputOptions(`-af`, `bass=g=${bass}`)
+                    }
+                } else {
+                    if (treble) {
+                        videoFfmpeg.addOutputOptions(`-af`, `treble=g=${treble}`)
+                    }
+                }
+            }
             if (!liveContent) videoFfmpeg.videoCodec("mpeg4")
+            if (!metadata) videoFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
             videoFfmpeg.save(`${usedFilename}.${fileFormat}`)
             videoFfmpeg.on('error', (err) => {
                 if (fs.existsSync(`${usedFilename}.mp3`)) {
