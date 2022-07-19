@@ -34,10 +34,11 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
 function getSupportedName(name) {
+    if (!name) return console.log("Could not get the name")
     return name.replaceAll("\\", "").replaceAll("/", "").replaceAll(":", "").replaceAll("*", "").replaceAll("?", "").replaceAll("\"", "").replaceAll("<", "").replaceAll(">", "").replaceAll("|", "");
 }
 
-async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
+async function downloadAudioFfmpeg(liveContent, input, filename, thumbnail, id, download) {
     let supportedFilename = getSupportedName(filename);
     let usedFilename = `${downloads}\\Audios\\${supportedFilename}`;
     if (presetName) {
@@ -55,9 +56,9 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
             });
 
             if (askOverwrite.overwrite.toLowerCase() === "n") return;
-            return downloadAudioFfmpeg(input, filename, thumbnail, id, true)
+            return downloadAudioFfmpeg(liveContent, input, filename, thumbnail, id, true)
         } else {
-            return downloadAudioFfmpeg(input, filename, thumbnail, id, true)
+            return downloadAudioFfmpeg(liveContent, input, filename, thumbnail, id, true)
         }
     } else {
         write("Getting ready to start downloading...")
@@ -107,9 +108,13 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
                 totalTime = parseInt(data.duration.replace(/:/g, ''));
             });
             audioFfmpeg.on('progress', (prog) => {
-                if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
-                const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
-                return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                if (!liveContent) {
+                    if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                    const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                    return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                } else {
+                    write(`Downloading live content, length downloaded: ${prog.timemark.replace(/00:/g, "").split(".")[0]}`)
+                }
             });
             audioFfmpeg.on('error', (err) => {
                 if (fs.existsSync(`${usedFilename}.mp3`)) {
@@ -154,7 +159,7 @@ async function downloadAudioFfmpeg(input, filename, thumbnail, id, download) {
     }
 }
 
-async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
+async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename, download) {
     let supportedFilename = getSupportedName(filename);
     let usedFilename = `${downloads}\\Videos\\${supportedFilename}`;
     if (presetName) {
@@ -172,58 +177,72 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
             });
 
             if (askOverwrite.overwrite.toLowerCase() === "n") return;
-            return downloadVideoFfmpeg(audioInput, videoInput, filename, true)
+            return downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename, true)
         } else {
-            return downloadVideoFfmpeg(audioInput, videoInput, filename, true)
+            return downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename, true)
         }
     } else {
         write("Getting ready to start downloading...")
-        let audioFfmpeg = ffmpeg(audioInput)
-        if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
-        if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
-        if (bass) {
-            if (treble) {
-                audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass},treble=g=${treble}`)
+        if (!liveContent) {
+            let audioFfmpeg = ffmpeg(audioInput)
+            if (audioBitrate) audioFfmpeg.audioBitrate(audioBitrate)
+            if (volume) audioFfmpeg.addOutputOption('-filter:a', `volume=${volume}`)
+            if (bass) {
+                if (treble) {
+                    audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass},treble=g=${treble}`)
+                } else {
+                    audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass}`)
+                }
             } else {
-                audioFfmpeg.addOutputOptions(`-af`, `bass=g=${bass}`)
-            }
-        } else {
-            if (treble) {
-                audioFfmpeg.addOutputOptions(`-af`, `treble=g=${treble}`)
-            }
-        }
-        if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
-        audioFfmpeg.save(`${usedFilename}.mp3`)
-        audioFfmpeg.on('error', (err) => {
-            if (fs.existsSync(`${usedFilename}.mp3`)) {
-                unlink()
-                function unlink() {
-                    fs.unlink(`${usedFilename}.mp3`, (err) => {
-                        if (err) unlink()
-                    })
+                if (treble) {
+                    audioFfmpeg.addOutputOptions(`-af`, `treble=g=${treble}`)
                 }
             }
-            // if a error was found downloading audio
-            write("An error occurred, Sorry!")
-            if (debug) write(err.message)
-            return;
-        });
-        audioFfmpeg.on('end', () => {
+            if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
+            audioFfmpeg.save(`${usedFilename}.mp3`)
+            audioFfmpeg.on('error', (err) => {
+                if (fs.existsSync(`${usedFilename}.mp3`)) {
+                    unlink()
+                    function unlink() {
+                        fs.unlink(`${usedFilename}.mp3`, (err) => {
+                            if (err) unlink()
+                        })
+                    }
+                }
+                // if a error was found downloading audio
+                write("An error occurred, Sorry!")
+                if (debug) write(err.message)
+                return;
+            });
+            audioFfmpeg.on('end', () => {
+                onEndDownload()
+            });
+        } else {
+            onEndDownload()
+        }
+        function onEndDownload() {
+            let fileFormat = "mp4";
+            if (liveContent) fileFormat = "flv";
             let videoFfmpeg = ffmpeg(videoInput)
             videoFfmpeg.on('codecData', (data) => {
                 totalTime = parseInt(data.duration.replace(/:/g, ''));
             });
             videoFfmpeg.on('progress', (prog) => {
-                if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
-                const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
-                return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                if (!liveContent) {
+                    if (prog.percent) return write(`${Math.round(prog.percent)}% Completed`)
+                    const calculatedProg = (parseInt(prog.timemark.replace(/:/g, '')) / totalTime) * 100;
+                    return write(`${Math.round(Number(calculatedProg))}% Completed`)
+                } else {
+                    write(`Downloading live content, length downloaded: ${prog.timemark.replace(/00:/g, "").split(".")[0]}`)
+                }
             });
             if (quality) videoFfmpeg.size(`?x${quality}`)
             if (framerate) videoFfmpeg.fps(framerate)
             if (videoBitrate) videoFfmpeg.videoBitrate(videoBitrate);
-            if (!metadata) audioFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
-            videoFfmpeg.addInput(`${usedFilename}.mp3`)
-            videoFfmpeg.save(`${usedFilename}.mp4`)
+            if (!liveContent) videoFfmpeg.addInput(`${usedFilename}.mp3`);
+            if (liveContent) videoFfmpeg.videoCodec("flv");
+            if (!liveContent) videoFfmpeg.videoCodec("mpeg4")
+            videoFfmpeg.save(`${usedFilename}.${fileFormat}`)
             videoFfmpeg.on('error', (err) => {
                 if (fs.existsSync(`${usedFilename}.mp3`)) {
                     unlink()
@@ -233,10 +252,10 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         })
                     }
                 }
-                if (fs.existsSync(`${usedFilename}.mp4`)) {
+                if (fs.existsSync(`${usedFilename}.${fileFormat}`)) {
                     unlink()
                     function unlink() {
-                        fs.unlink(`${usedFilename}.mp4`, (err) => {
+                        fs.unlink(`${usedFilename}.${fileFormat}`, (err) => {
                             if (err) unlink()
                         })
                     }
@@ -246,15 +265,17 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 return;
             })
             videoFfmpeg.on('end', () => {
-                unlink()
-                function unlink() {
-                    fs.unlink(`${usedFilename}.mp3`, (err) => {
-                        if (err) unlink()
-                    });
+                if (fs.existsSync(`${usedFilename}.mp3`)) {
+                    unlink()
+                    function unlink() {
+                        fs.unlink(`${usedFilename}.mp3`, (err) => {
+                            if (err) unlink()
+                        });
+                    }
                 }
                 return write("Succesfully completed download!")
             });
-        });
+        }
     }
 }
 
@@ -400,10 +421,11 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
 
                             vidNum = askVid.vid;
                         } else vidNum = 1;
+                        let liveContent = false;
 
-                        if (searched[vidNum - 1].live) return write("This content is live, cannot download!")
-                        const searchedId = await getVideo(`https://youtu.be/${searched[vidNum - 1].id}`).catch(() => {});
-                        if (searchedId.live) return write("This content is live, cannot download!")
+                        if (searched[vidNum - 1].live) liveContent = true;
+                        const searchedId = await getVideo(`https://youtu.be/${searched[vidNum - 1].id}`).catch(() => { });
+                        if (searchedId.live) liveContent = true;
 
                         // ask the format, mp4, mp3 or both 
                         let askFormat;
@@ -447,9 +469,14 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         let supportedFilename = getSupportedName(searched[vidNum - 1].title);
 
                         // if you chose mp4/video
-                        if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
+                        if (liveContent) {
+                            metadata = false;
+                            if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, null, ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
+                        } else {
+                            if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
+                        }
                         // if you chose mp3/audio
-                        if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url, searched[vidNum - 1].id)
+                        if (askFormat.format === "mp3") return downloadAudioFfmpeg(liveContent, ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url, searched[vidNum - 1].id)
                     }
                 });
                 return;
@@ -473,8 +500,9 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                 });
 
                 if (!searched) return; // this just stops the code below from running if no video was found
+                let liveContent = false;
 
-                if (searched.live) return write("This content is live, cannot download!")
+                if (searched.live) liveContent = true;
 
                 let askFormat;
                 if (format) askFormat = { format }
@@ -514,11 +542,15 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                     }
                 }
 
-
                 let supportedFilename = getSupportedName(searched.title);
 
-                if (askFormat.format === "mp4") return downloadVideoFfmpeg(ytdl(searched.id, { quality: 'highestaudio' }), ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
-                if (askFormat.format === "mp3") return downloadAudioFfmpeg(ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename, searched.thumbnail.url, searched.id);
+                if (liveContent) {
+                    metadata = false;
+                    if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, null, ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
+                } else {
+                    if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, ytdl(searched.id, { quality: 'highestaudio' }), ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
+                }
+                if (askFormat.format === "mp3") return downloadAudioFfmpeg(liveContent, ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename, searched.thumbnail.url, searched.id);
                 return;
             }
         }
