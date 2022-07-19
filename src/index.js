@@ -348,7 +348,7 @@ async function downloadVideoFfmpeg(audioInput, videoInput, filename, download) {
                         if (presetOption.bass !== null) bass = presetOption.bass
                         if (presetOption.treble !== null) treble = presetOption.treble
                         if (presetOption.framerate !== null) framerate = presetOption.framerate
-                        if (presetOption.volume !== null) fovolumermat = presetOption.volume
+                        if (presetOption.volume !== null) volume = presetOption.volume
                     }
                 }
             };
