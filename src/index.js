@@ -18,7 +18,7 @@ function c() {
     console.log("");
 }
 const { resolve } = require('path');
-let dirname = __dirname.replaceAll("/", "\\");
+let dirname = __dirname.replace(/\//g, "\\");
 const fs = require('fs');
 const defaultPresets = require(`${dirname}\\default.presets.json`);
 const defaultConfig = require(`${dirname}\\default.config.json`);
