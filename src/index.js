@@ -18,16 +18,16 @@ function c() {
     console.log("");
 }
 const { resolve } = require('path');
-__dirname = __dirname.replaceAll("/", "\\");
+let dirname = __dirname.replaceAll("/", "\\");
 const fs = require('fs');
-const defaultPresets = require(`${__dirname}\\default.presets.json`);
-const defaultConfig = require(`${__dirname}\\default.config.json`);
-let presetLoc = `${__dirname}\\presets.json`;
-let configLoc = `${__dirname}\\config.json`;
-if (!fs.existsSync(`${__dirname}\\presets.json`)) presetLoc = `${__dirname}\\default.presets.json`;
-if (!fs.existsSync(`${__dirname}\\config.json`)) configLoc = `${__dirname}\\default.config.json`;
+const defaultPresets = require(`${dirname}\\default.presets.json`);
+const defaultConfig = require(`${dirname}\\default.config.json`);
+let presetLoc = `${dirname}\\presets.json`;
+let configLoc = `${dirname}\\config.json`;
+if (!fs.existsSync(`${dirname}\\presets.json`)) presetLoc = `${dirname}\\default.presets.json`;
+if (!fs.existsSync(`${dirname}\\config.json`)) configLoc = `${dirname}\\default.config.json`;
 const { execFile } = require('child_process');
-const downloads = `${resolve(__dirname, '..')}\\YouTube Downloader`;
+const downloads = `${resolve(dirname, '..')}\\YouTube Downloader`;
 let usingPreset = false;
 let { presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
 const presets = require(presetLoc);
@@ -298,8 +298,8 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
 
 (async () => {
     await fetch('https://raw.githubusercontent.com/lyall-pc/YouTube-Downloader/main/package.json').then(res => res.json()).then(package => {
-        if (package.version !== require(`${resolve(__dirname, '..')}\\package.json`).version) {
-            if (!fs.existsSync(`${resolve(__dirname, '..')}\\no_update`)) {
+        if (package.version !== require(`${resolve(dirname, '..')}\\package.json`).version) {
+            if (!fs.existsSync(`${resolve(dirname, '..')}\\no_update`)) {
                 execFile('git', ['--version'], (err) => {
                     if (err) {
                         write("An update was found, but cannot automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
@@ -355,8 +355,8 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
         if (!fs.existsSync(downloads)) fs.mkdirSync(downloads);
         if (!fs.existsSync(`${downloads}\\Videos`)) fs.mkdirSync(`${downloads}\\Videos`);
         if (!fs.existsSync(`${downloads}\\Audios`)) fs.mkdirSync(`${downloads}\\Audios`);
-        if (!fs.existsSync(`${__dirname}\\presets.json`)) fs.writeFileSync(`${__dirname}\\presets.json`, JSON.stringify(defaultPresets, null, 4));
-        if (!fs.existsSync(`${__dirname}\\config.json`)) fs.writeFileSync(`${__dirname}\\config.json`, JSON.stringify(defaultConfig, null, 4));
+        if (!fs.existsSync(`${dirname}\\presets.json`)) fs.writeFileSync(`${dirname}\\presets.json`, JSON.stringify(defaultPresets, null, 4));
+        if (!fs.existsSync(`${dirname}\\config.json`)) fs.writeFileSync(`${dirname}\\config.json`, JSON.stringify(defaultConfig, null, 4));
 
         if (Object.keys(presets).length !== 0) {
             let presetsFound = 0;
