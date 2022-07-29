@@ -306,18 +306,16 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
                         c()
                         start()
                     } else {
-                        execFile('git', ['stash', 'save'], (err) => {
-                            execFile('git', ['pull'], (err) => {
-                                if (err) {
-                                    if (!debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
-                                    if (debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
-                                    c()
-                                    start()
-                                } else {
-                                    write("Installed update, please restart!")
-                                }
-                            });
-                        })
+                        execFile('git', ['pull'], (err) => {
+                            if (err) {
+                                if (!debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
+                                if (debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
+                                c()
+                                start()
+                            } else {
+                                write("Installed update, please restart!")
+                            }
+                        });
                     }
                 });
             } else {
