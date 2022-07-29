@@ -257,7 +257,7 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
                     }
                 }
             }
-            if (!liveContent) videoFfmpeg.videoCodec("mpeg4")
+            if (!liveContent) videoFfmpeg.videoCodec("libx264")
             if (!metadata) videoFfmpeg.addOutputOptions(`-map_metadata`, `-1`)
             videoFfmpeg.save(`${usedFilename}.${fileFormat}`)
             videoFfmpeg.on('error', (err) => {
