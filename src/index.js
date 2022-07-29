@@ -306,7 +306,7 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
                         c()
                         start()
                     } else {
-                        execFile('git', ['config', '--global', '-add', 'safe.directory', `"${resolve(__dirname, '..').replaceAll("\\", "/")}"`], (err) => {
+                        execFile('git', ['config', '--global', '--add', 'safe.directory', `${resolve(__dirname, '..').replaceAll("\\", "/")}`], (err) => {
                             execFile('git', ['stash', 'save'], (err) => {
                                execFile('git', ['pull'], (err) => {
                                     if (err) {
