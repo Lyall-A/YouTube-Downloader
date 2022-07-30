@@ -8,6 +8,17 @@ const ffmpeg = require('fluent-ffmpeg');
 const prompts = require('prompts');
 const fetch = require('node-fetch');
 const request = require('request');
+const qualitys = [
+    { title: '4320p (8K)', value: '4320' },
+    { title: '2160p (4K)', value: '2160' },
+    { title: '1440p (HD)', value: '1440' },
+    { title: '1080p (HD)', value: '1080' },
+    { title: '720p', value: '720' },
+    { title: '480p', value: '480' },
+    { title: '360p', value: '360' },
+    { title: '240p', value: '240' },
+    { title: '144p', value: '144' }
+];
 let totalTime = 0;
 function write(text) {
     process.stdout.clearLine();
@@ -462,24 +473,19 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
                         if (askFormat.format !== "mp3") {
                             // ask the quality
                             let askQuality;
+                            let supportedQuality = [ ];
+                            let qualitysRan = 0;
+                            qualitys.forEach(quality => {
+                                qualitysRan += 1;
+                                if (Number(quality.value) <= searchedId.adaptiveFormats[0].height) supportedQuality.push(quality);
+                            });
                             if (quality) askQuality = { quality }
                             if (!quality) {
                                 askQuality = await prompts({
                                     type: 'select',
                                     name: 'quality',
                                     message: 'What Quality do you want to download?',
-                                    choices: [
-                                        { title: 'Default (1080p)', value: '1080' },
-                                        { title: '144p', value: '144' },
-                                        { title: '240p', value: '240' },
-                                        { title: '360p', value: '360' },
-                                        { title: '480p', value: '480' },
-                                        { title: '720p', value: '720' },
-                                        { title: '1080p (hd)', value: '1080' },
-                                        { title: '1440p (hd)', value: '1440' },
-                                        { title: '2160p (4k)', value: '2160' },
-                                        { title: '4320p (8k)', value: '4320' }
-                                    ],
+                                    choices: supportedQuality,
                                 });
                                 quality = askQuality.quality
                             }
@@ -538,24 +544,19 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
                 if (askFormat.format !== "mp3") {
                     // ask the quality
                     let askQuality;
+                    let supportedQuality = [ ];
+                    let qualitysRan = 0;
+                    qualitys.forEach(quality => {
+                        qualitysRan += 1;
+                        if (Number(quality.value) <= searched.adaptiveFormats[0].height) supportedQuality.push(quality);
+                    });
                     if (quality) askQuality = { quality }
                     if (!quality) {
                         askQuality = await prompts({
                             type: 'select',
                             name: 'quality',
                             message: 'What Quality do you want to download?',
-                            choices: [
-                                { title: 'Default (1080p)', value: '1080' },
-                                { title: '144p', value: '144' },
-                                { title: '240p', value: '240' },
-                                { title: '360p', value: '360' },
-                                { title: '480p', value: '480' },
-                                { title: '720p', value: '720' },
-                                { title: '1080p (hd)', value: '1080' },
-                                { title: '1440p (hd)', value: '1440' },
-                                { title: '2160p (4k)', value: '2160' },
-                                { title: '4320p (8k)', value: '4320' }
-                            ],
+                            choices: supportedQuality,
                         });
                         quality = askQuality.quality
                     }
