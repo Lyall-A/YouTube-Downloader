@@ -40,7 +40,7 @@ if (!fs.existsSync(`${dirname}\\config.json`)) configLoc = `${dirname}\\default.
 const { execFile } = require('child_process');
 const downloads = `${resolve(dirname, '..')}\\YouTube Downloader`;
 let usingPreset = false;
-let { presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
+var { presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
 const presets = require(presetLoc);
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
@@ -48,6 +48,18 @@ ffmpeg.setFfprobePath(ffprobePath);
 function getSupportedName(name) {
     if (!name) return console.log("Could not get the name")
     return name.replaceAll("\\", "").replaceAll("/", "").replaceAll(":", "").replaceAll("*", "").replaceAll("?", "").replaceAll("\"", "").replaceAll("<", "").replaceAll(">", "").replaceAll("|", "");
+}
+
+async function end() {
+    c();
+    const askRestart = await prompts({
+        type: 'text',
+        name: 'restart',
+        message: 'Download another? \'Y/N\'',
+        validate: response => response.toLowerCase() === "n" ? true : response.toLowerCase() === "y" ? true : "Invalid option"
+    });
+    if (askRestart.restart.toLowerCase() === "n") return;
+    return start();
 }
 
 async function downloadAudioFfmpeg(liveContent, input, filename, thumbnail, id, download) {
@@ -166,6 +178,7 @@ async function downloadAudioFfmpeg(liveContent, input, filename, thumbnail, id, 
                     }
                 }
                 write("Succesfully completed download!")
+                end()
             });
         }
     }
@@ -301,7 +314,8 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
                         });
                     }
                 }
-                return write("Succesfully completed download!")
+                write("Succesfully completed download!")
+                end()
             });
         }
     }
@@ -319,7 +333,7 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
                     } else {
                         execFile('git', ['config', '--global', '--add', 'safe.directory', `${resolve(__dirname, '..').replaceAll("\\", "/")}`], (err) => {
                             execFile('git', ['stash', 'save'], (err) => {
-                               execFile('git', ['pull'], (err) => {
+                                execFile('git', ['pull'], (err) => {
                                     if (err) {
                                         if (!debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update!")
                                         if (debug) write("An update was found, but failed to automatically update. Please go to https://github.com/lyall-pc/YouTube-Downloader to update! Error: " + err)
@@ -344,235 +358,239 @@ async function downloadVideoFfmpeg(liveContent, audioInput, videoInput, filename
         c()
         start()
     });
-
-    async function start() {
-
-        // if debug mode is on it runs this
-        if (debug === true) {
-            let old = { mkdirSync: fs.mkdirSync, writeFileSync: fs.writeFileSync }
-            write(chalk.red("DEBUG MODE IS ENABLED"))
-            c()
-            fs.mkdirSync = function (dir) {
-                write(`Creating directory ${dir}`)
-                c()
-                old.mkdirSync(dir);
-            }
-            fs.writeFileSync = function (file, data) {
-                write(`Creating file ${file}`)
-                c()
-                old.writeFileSync(file, data);
-            }
-        }
-
-        // checks if download folders exist, if not then it automatically creates them
-        if (!fs.existsSync(downloads)) fs.mkdirSync(downloads);
-        if (!fs.existsSync(`${downloads}\\Videos`)) fs.mkdirSync(`${downloads}\\Videos`);
-        if (!fs.existsSync(`${downloads}\\Audios`)) fs.mkdirSync(`${downloads}\\Audios`);
-        if (!fs.existsSync(`${dirname}\\presets.json`)) fs.writeFileSync(`${dirname}\\presets.json`, JSON.stringify(defaultPresets, null, 4));
-        if (!fs.existsSync(`${dirname}\\config.json`)) fs.writeFileSync(`${dirname}\\config.json`, JSON.stringify(defaultConfig, null, 4));
-
-        if (Object.keys(presets).length !== 0) {
-            let presetsFound = 0;
-            let presetArray = [{ title: 'None', value: 'none' }];
-            for (const preset in presets) {
-                presetsFound += 1;
-                presetArray.push({ title: presets[preset].name, value: preset })
-                if (presetsFound === Object.keys(presets).length) {
-                    const askPreset = await prompts({
-                        type: 'select',
-                        name: 'preset',
-                        message: 'Found presets, select preset',
-                        choices: presetArray
-                    });
-
-                    if (askPreset.preset !== "none") {
-                        usingPreset = presets[askPreset.preset].name;
-                        let presetOption = presets[askPreset.preset].config
-
-                        if (presetOption.metadata !== null) metadata = presetOption.metadata
-                        if (presetOption.videos !== null) searchLimit = presetOption.videos
-                        if (presetOption.quality !== null) quality = presetOption.quality
-                        if (presetOption.overwrite !== null) overwrite = presetOption.overwrite
-                        if (presetOption.format !== null) format = presetOption.format
-                        if (presetOption.videoBitrate !== null) videoBitrate = presetOption.videoBitrate
-                        if (presetOption.audioBitrate !== null) audioBitrate = presetOption.audioBitrate
-                        if (presetOption.bass !== null) bass = presetOption.bass
-                        if (presetOption.treble !== null) treble = presetOption.treble
-                        if (presetOption.framerate !== null) framerate = presetOption.framerate
-                        if (presetOption.volume !== null) volume = presetOption.volume
-                    }
-                }
-            };
-        }
-
-        // asking for the link or query
-        const askYouTube = await prompts({
-            type: 'text',
-            name: 'youtube',
-            message: 'Enter YouTube link or Search Query',
-            validate: response => response === "" ? "You must enter a YouTube link or a Search Query" : true
-        });
+})();
 
 
-        // detect if answer is link or query
-        if (askYouTube.youtube.startsWith('http')) { launch("link") } else { launch("search") }
+// if debug mode is on it runs this
+if (debug === true) {
+    let old = { mkdirSync: fs.mkdirSync, writeFileSync: fs.writeFileSync }
+    write(chalk.red("DEBUG MODE IS ENABLED"))
+    c()
+    fs.mkdirSync = function (dir) {
+        write(`Creating directory ${dir}`)
+        c()
+        old.mkdirSync(dir);
+    }
+    fs.writeFileSync = function (file, data) {
+        write(`Creating file ${file}`)
+        c()
+        old.writeFileSync(file, data);
+    }
+}
 
-        // launch the downloader
-        async function launch(option) {
-            // if it detected a search and not a link
-            if (option === "search") {
-                // get video details using youtube api
-                const searched = await search(askYouTube.youtube, { limit: searchLimit });
-                if (!searched[0]) {
-                    return write(chalk.red("No results where found"))
-                }
+// checks if download folders exist, if not then it automatically creates them
+if (!fs.existsSync(downloads)) fs.mkdirSync(downloads);
+if (!fs.existsSync(`${downloads}\\Videos`)) fs.mkdirSync(`${downloads}\\Videos`);
+if (!fs.existsSync(`${downloads}\\Audios`)) fs.mkdirSync(`${downloads}\\Audios`);
+if (!fs.existsSync(`${dirname}\\presets.json`)) fs.writeFileSync(`${dirname}\\presets.json`, JSON.stringify(defaultPresets, null, 4));
+if (!fs.existsSync(`${dirname}\\config.json`)) fs.writeFileSync(`${dirname}\\config.json`, JSON.stringify(defaultConfig, null, 4));
 
-                let query = 0;
-                let searchArray = [];
-                // adding search results
-                searched.forEach(async each => {
-                    query += 1;
-                    let name;
-                    if (each.title.length > 100) {
-                        name = each.title.substring(0, 97) + "..."
-                    } else name = each.title;
-                    searchArray.push({ title: chalk.blue(query + ". ") + chalk.green(name), value: `${query}` });
-                    if (query === searched.length) {
-                        let vidNum;
-                        if (searchLimit !== 1) {
-                            // ask what video you want to choose, 1 out of the specified limit
+async function start() {
 
-                            const askVid = await prompts({
-                                type: 'select',
-                                name: 'vid',
-                                choices: searchArray,
-                                message: 'What one do you want?',
-                            });
+    usingPreset = false;
+    var { presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
 
-                            vidNum = askVid.vid;
-                        } else vidNum = 1;
-                        let liveContent = false;
-
-                        if (searched[vidNum - 1].live) liveContent = true;
-                        const searchedId = await getVideo(`https://youtu.be/${searched[vidNum - 1].id}`).catch(() => { });
-                        if (searchedId.live) liveContent = true;
-
-                        // ask the format, mp4, mp3 or both 
-                        let askFormat;
-                        if (format) askFormat = { format }
-                        if (!format) askFormat = await prompts({
-                            type: 'select',
-                            name: 'format',
-                            message: 'What Format do you want to download?',
-                            choices: [
-                                { title: 'Video', value: 'mp4' },
-                                { title: 'Audio', value: 'mp3' }
-                            ],
-                        });
-
-                        if (askFormat.format !== "mp3") {
-                            // ask the quality
-                            let askQuality;
-                            let supportedQuality = [ ];
-                            let qualitysRan = 0;
-                            qualitys.forEach(quality => {
-                                qualitysRan += 1;
-                                if (Number(quality.value) <= searchedId.adaptiveFormats[0].height) supportedQuality.push(quality);
-                            });
-                            if (quality) askQuality = { quality }
-                            if (!quality) {
-                                askQuality = await prompts({
-                                    type: 'select',
-                                    name: 'quality',
-                                    message: 'What Quality do you want to download?',
-                                    choices: supportedQuality,
-                                });
-                                quality = askQuality.quality
-                            }
-                        }
-
-                        let supportedFilename = getSupportedName(searched[vidNum - 1].title);
-
-                        // if you chose mp4/video
-                        if (liveContent) {
-                            metadata = false;
-                            if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, null, ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
-                        } else {
-                            if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
-                        }
-                        // if you chose mp3/audio
-                        if (askFormat.format === "mp3") return downloadAudioFfmpeg(liveContent, ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url, searched[vidNum - 1].id)
-                    }
-                });
-                return;
-            }
-            if (option === "link") {
-                let link = askYouTube.youtube;
-                if (!link.split("/")[2].endsWith("youtu.be")) {
-                    if (!link.split("/")[2].endsWith("youtube.com")) {
-                        return write("Invalid URL")
-                    }
-                }
-                if (!link.includes("/shorts/")) {
-                    link = link.split("&")[0];
-                } else {
-                    link = link.split("?")[0];
-                }
-
-                const searched = await getVideo(link).catch(err => {
-                    // if it failed to get video, log
-                    return write("Failed to find video")
-                });
-
-                if (!searched) return; // this just stops the code below from running if no video was found
-                let liveContent = false;
-
-                if (searched.live) liveContent = true;
-
-                let askFormat;
-                if (format) askFormat = { format }
-                if (!format) askFormat = await prompts({
+    if (Object.keys(presets).length !== 0) {
+        let presetsFound = 0;
+        let presetArray = [{ title: 'None', value: 'none' }];
+        for (const preset in presets) {
+            presetsFound += 1;
+            presetArray.push({ title: presets[preset].name, value: preset })
+            if (presetsFound === Object.keys(presets).length) {
+                const askPreset = await prompts({
                     type: 'select',
-                    name: 'format',
-                    message: 'What Format do you want to download?',
-                    choices: [
-                        { title: 'Video', value: 'mp4' },
-                        { title: 'Audio', value: 'mp3' }
-                    ],
+                    name: 'preset',
+                    message: 'Found presets, select preset',
+                    choices: presetArray
                 });
 
-                if (askFormat.format !== "mp3") {
-                    // ask the quality
-                    let askQuality;
-                    let supportedQuality = [ ];
-                    let qualitysRan = 0;
-                    qualitys.forEach(quality => {
-                        qualitysRan += 1;
-                        if (Number(quality.value) <= searched.adaptiveFormats[0].height) supportedQuality.push(quality);
-                    });
-                    if (quality) askQuality = { quality }
-                    if (!quality) {
-                        askQuality = await prompts({
-                            type: 'select',
-                            name: 'quality',
-                            message: 'What Quality do you want to download?',
-                            choices: supportedQuality,
-                        });
-                        quality = askQuality.quality
-                    }
-                }
+                if (askPreset.preset !== "none") {
+                    usingPreset = presets[askPreset.preset].name;
+                    let presetOption = presets[askPreset.preset].config
 
-                let supportedFilename = getSupportedName(searched.title);
-
-                if (liveContent) {
-                    metadata = false;
-                    if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, null, ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
-                } else {
-                    if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, ytdl(searched.id, { quality: 'highestaudio' }), ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
+                    if (presetOption.metadata !== null) metadata = presetOption.metadata
+                    if (presetOption.videos !== null) searchLimit = presetOption.videos
+                    if (presetOption.quality !== null) quality = presetOption.quality
+                    if (presetOption.overwrite !== null) overwrite = presetOption.overwrite
+                    if (presetOption.format !== null) format = presetOption.format
+                    if (presetOption.videoBitrate !== null) videoBitrate = presetOption.videoBitrate
+                    if (presetOption.audioBitrate !== null) audioBitrate = presetOption.audioBitrate
+                    if (presetOption.bass !== null) bass = presetOption.bass
+                    if (presetOption.treble !== null) treble = presetOption.treble
+                    if (presetOption.framerate !== null) framerate = presetOption.framerate
+                    if (presetOption.volume !== null) volume = presetOption.volume
                 }
-                if (askFormat.format === "mp3") return downloadAudioFfmpeg(liveContent, ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename, searched.thumbnail.url, searched.id);
-                return;
             }
+        };
+    }
+
+    // asking for the link or query
+    const askYouTube = await prompts({
+        type: 'text',
+        name: 'youtube',
+        message: 'Enter YouTube link or Search Query',
+        validate: response => response === "" ? "You must enter a YouTube link or a Search Query" : true
+    });
+
+
+    // detect if answer is link or query
+    if (askYouTube.youtube.startsWith('http')) { launch("link") } else { launch("search") }
+
+    // launch the downloader
+    async function launch(option) {
+        // if it detected a search and not a link
+        if (option === "search") {
+            // get video details using youtube api
+            const searched = await search(askYouTube.youtube, { limit: searchLimit });
+            if (!searched[0]) {
+                return write(chalk.red("No results where found"))
+            }
+
+            let query = 0;
+            let searchArray = [];
+            // adding search results
+            searched.forEach(async each => {
+                query += 1;
+                let name;
+                if (each.title.length > 100) {
+                    name = each.title.substring(0, 97) + "..."
+                } else name = each.title;
+                searchArray.push({ title: chalk.blue(query + ". ") + chalk.green(name), value: `${query}` });
+                if (query === searched.length) {
+                    let vidNum;
+                    if (searchLimit !== 1) {
+                        // ask what video you want to choose, 1 out of the specified limit
+
+                        const askVid = await prompts({
+                            type: 'select',
+                            name: 'vid',
+                            choices: searchArray,
+                            message: 'What one do you want?',
+                        });
+
+                        vidNum = askVid.vid;
+                    } else vidNum = 1;
+                    let liveContent = false;
+
+                    if (searched[vidNum - 1].live) liveContent = true;
+                    const searchedId = await getVideo(`https://youtu.be/${searched[vidNum - 1].id}`).catch(() => { });
+                    if (searchedId.live) liveContent = true;
+
+                    // ask the format, mp4, mp3 or both 
+                    let askFormat;
+                    if (format) askFormat = { format }
+                    if (!format) askFormat = await prompts({
+                        type: 'select',
+                        name: 'format',
+                        message: 'What Format do you want to download?',
+                        choices: [
+                            { title: 'Video', value: 'mp4' },
+                            { title: 'Audio', value: 'mp3' }
+                        ],
+                    });
+
+                    if (askFormat.format !== "mp3") {
+                        // ask the quality
+                        let askQuality;
+                        let supportedQuality = [];
+                        let qualitysRan = 0;
+                        qualitys.forEach(quality => {
+                            qualitysRan += 1;
+                            if (Number(quality.value) <= searchedId.adaptiveFormats[0].height) supportedQuality.push(quality);
+                        });
+                        if (quality) askQuality = { quality }
+                        if (!quality) {
+                            askQuality = await prompts({
+                                type: 'select',
+                                name: 'quality',
+                                message: 'What Quality do you want to download?',
+                                choices: supportedQuality,
+                            });
+                            quality = askQuality.quality
+                        }
+                    }
+
+                    let supportedFilename = getSupportedName(searched[vidNum - 1].title);
+
+                    // if you chose mp4/video
+                    if (liveContent) {
+                        metadata = false;
+                        if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, null, ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
+                    } else {
+                        if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), ytdl(searched[vidNum - 1].id, { quality: 'highestvideo' }), supportedFilename)
+                    }
+                    // if you chose mp3/audio
+                    if (askFormat.format === "mp3") return downloadAudioFfmpeg(liveContent, ytdl(searched[vidNum - 1].id, { quality: 'highestaudio' }), supportedFilename, searched[vidNum - 1].thumbnail.url, searched[vidNum - 1].id)
+                }
+            });
+            return;
+        }
+        if (option === "link") {
+            let link = askYouTube.youtube;
+            if (!link.split("/")[2].endsWith("youtu.be")) {
+                if (!link.split("/")[2].endsWith("youtube.com")) {
+                    return write("Invalid URL")
+                }
+            }
+            if (!link.includes("/shorts/")) {
+                link = link.split("&")[0];
+            } else {
+                link = link.split("?")[0];
+            }
+
+            const searched = await getVideo(link).catch(err => {
+                // if it failed to get video, log
+                return write("Failed to find video")
+            });
+
+            if (!searched) return; // this just stops the code below from running if no video was found
+            let liveContent = false;
+
+            if (searched.live) liveContent = true;
+
+            let askFormat;
+            if (format) askFormat = { format }
+            if (!format) askFormat = await prompts({
+                type: 'select',
+                name: 'format',
+                message: 'What Format do you want to download?',
+                choices: [
+                    { title: 'Video', value: 'mp4' },
+                    { title: 'Audio', value: 'mp3' }
+                ],
+            });
+
+            if (askFormat.format !== "mp3") {
+                // ask the quality
+                let askQuality;
+                let supportedQuality = [];
+                let qualitysRan = 0;
+                qualitys.forEach(quality => {
+                    qualitysRan += 1;
+                    if (Number(quality.value) <= searched.adaptiveFormats[0].height) supportedQuality.push(quality);
+                });
+                if (quality) askQuality = { quality }
+                if (!quality) {
+                    askQuality = await prompts({
+                        type: 'select',
+                        name: 'quality',
+                        message: 'What Quality do you want to download?',
+                        choices: supportedQuality,
+                    });
+                    quality = askQuality.quality
+                }
+            }
+
+            let supportedFilename = getSupportedName(searched.title);
+
+            if (liveContent) {
+                metadata = false;
+                if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, null, ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
+            } else {
+                if (askFormat.format === "mp4") return downloadVideoFfmpeg(liveContent, ytdl(searched.id, { quality: 'highestaudio' }), ytdl(searched.id, { quality: 'highestvideo' }), supportedFilename);
+            }
+            if (askFormat.format === "mp3") return downloadAudioFfmpeg(liveContent, ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename, searched.thumbnail.url, searched.id);
+            return;
         }
     }
-})();
+}
