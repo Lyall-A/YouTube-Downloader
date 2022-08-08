@@ -1,5 +1,6 @@
 {
     "enableWeb": false,
+    "webPort": 80,
     "presetName": true,
     "forcemp4": false,
     "metadata": true,
