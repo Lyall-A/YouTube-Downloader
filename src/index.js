@@ -40,7 +40,8 @@ if (!fs.existsSync(`${dirname}\\config.json`)) configLoc = `${dirname}\\default.
 const { execFile } = require('child_process');
 const downloads = `${resolve(dirname, '..')}\\YouTube Downloader`;
 let usingPreset = false;
-var { enableWeb, webPort, presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
+let config = require(configLoc);
+let { enableWeb, webPort, presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = config;
 const presets = require(presetLoc);
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
@@ -395,7 +396,17 @@ if (!fs.existsSync(`${dirname}\\config.json`)) fs.writeFileSync(`${dirname}\\con
 async function start() {
 
     usingPreset = false;
-    var { presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
+    metadata = config.metadata;
+    searchLimit = config.searchLimit;
+    quality = config.quality;
+    overwrite = config.overwrite;
+    format = config.format;
+    bass = config.bass;
+    treble = config.treble;
+    audioBitrate = config.audioBitrate;
+    volume = config.volume;
+    framerate = config.framerate;
+    videoBitrate = config.videoBitrate;
 
     if (Object.keys(presets).length !== 0) {
         let presetsFound = 0;
