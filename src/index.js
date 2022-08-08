@@ -40,10 +40,17 @@ if (!fs.existsSync(`${dirname}\\config.json`)) configLoc = `${dirname}\\default.
 const { execFile } = require('child_process');
 const downloads = `${resolve(dirname, '..')}\\YouTube Downloader`;
 let usingPreset = false;
-var { presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
+var { enableWeb, webPort, presetName, forcemp4, metadata, searchLimit, quality, overwrite, format, bass, treble, audioBitrate, volume, framerate, videoBitrate, debug } = require(configLoc);
 const presets = require(presetLoc);
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
+let express;
+let app;
+let online = false;
+if (enableWeb) {
+    express = require('express');
+    app = express();
+}
 
 function getSupportedName(name) {
     if (!name) return console.log("Could not get the name")
@@ -592,5 +599,9 @@ async function start() {
             if (askFormat.format === "mp3") return downloadAudioFfmpeg(liveContent, ytdl(searched.id, { quality: 'highestaudio' }), supportedFilename, searched.thumbnail.url, searched.id);
             return;
         }
+    }
+
+    if (enableWeb) {
+        app.listen(webPort, () => { online = true });
     }
 }
